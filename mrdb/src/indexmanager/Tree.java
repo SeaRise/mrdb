@@ -91,11 +91,7 @@ class Tree {
 	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
 		Node node = findLeafNode(key);
 		lt.update(node.pos);
-		int i = 0;
 		while (true) {
-			while (i < node.n-1 && IndexUtil.compareTo(key, node.keys[i+1], type) >= 0) { 
-				i++;
-			}
 			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
 				lt.lockX(node.rightPos);
 				lt.unlockX(node.pos);
@@ -116,14 +112,19 @@ class Tree {
 	//此时node加写锁
 	private void split(Node node, Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
 		while (node.isFull()) {
-			Node newNode = createNewNode(node, key, value);
 			Node parent = null;
-			key = newNode.keys[0];
-			value = newNode.pos;
-			
+			Node newNode = null;
 			if (node.isRoot()) {
-				parent = createNewRootNode();
+				parent = createNewRootNode(node);
+				node.parentPos = parent.pos;
+				newNode = createNewNode(node, key, value);
+				updateRootAddress(parent.pos);
+				key = newNode.keys[0];
+				value = newNode.pos;
 			} else {
+				newNode = createNewNode(node, key, value);
+				key = newNode.keys[0];
+				value = newNode.pos;
 				parent = getParentNode(node, key);
 			}
 			
@@ -135,12 +136,18 @@ class Tree {
 		lt.unlockX(node.pos);
 	}
 	
-	private Node createNewRootNode() throws OutOfDiskSpaceException {
+	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
-		byte[] bytes = new byte[4];
-		DataUtil.intToBytes(newRoot.addToDM(), 0, bytes);
-		DataManager.getInstance().update(rootAddress, bytes, TransactionManager.SUPER_ID);
+		newRoot.add(childNode);
+		newRoot.addToDM();
 		return newRoot;
+	}
+	
+	//更新根节点位置,同时给根节点加锁
+	private void updateRootAddress(int newAddress) {
+		byte[] bytes = new byte[4];
+		DataUtil.intToBytes(newAddress, 0, bytes);
+		DataManager.getInstance().update(rootAddress, bytes, TransactionManager.SUPER_ID);
 	}
 	
 	//把node分裂,同时把key,value插入,此时node加锁
@@ -158,6 +165,13 @@ class Tree {
 		// 0 --- mid-1
 		left.n = mid;
 		
+		//插入key,value
+		if (IndexUtil.compareTo(key, right.keys[0], type) >= 0) {
+			right.add(key, value);
+		} else {
+			left.add(key, value);
+		}
+		
 		int rightPos = right.addToDM();
 		left.setRight(rightPos, right.keys[0]);
 		left.writeBackToDM();
@@ -169,7 +183,7 @@ class Tree {
 	private Node getParentNode(Node node, Object key) {
 		lt.lockX(node.parentPos);
 		Node pnode = Node.getNode(node.parentPos);
-		while (pnode.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
+		while (pnode.rightPos != -1 && IndexUtil.compareTo(key, pnode.rightFirstkey, type) >= 0) {
 			int rightPos = pnode.rightPos;
 			lt.unlockX(pnode.pos);
 			lt.lockX(rightPos);
