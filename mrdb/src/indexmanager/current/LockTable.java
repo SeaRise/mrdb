@@ -48,21 +48,4 @@ public class LockTable {
 	public void degrade(int address) {
 		findItem(address).degrade();
 	}
-	
-	public boolean readToWrite(int address) {
-		if (findItem(address).isWriting()) {
-			return false;
-		}
-		unlockS(address);
-		lockX(address);
-		return true;
-	}
-	
-	public void writeToRead(int address) {
-		if (!findItem(address).isWriting()) {
-			return;
-		}
-		lockS(address);
-		unlockX(address);
-	}
 }

@@ -47,8 +47,8 @@ class IndexItem {
 	
 	void degrade() {
 		lock.lock();
-		rwlock.readLock().lock();
 		rwlock.writeLock().unlock();
+		rwlock.readLock().lock();
 		lock.unlock();
 	}
 	

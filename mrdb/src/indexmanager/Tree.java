@@ -40,8 +40,14 @@ class Tree {
 		return Node.getNode(address);
 	}
 	
+	private Node getRoot() {
+		DataManager dm = DataManager.getInstance();
+		int address = DataUtil.bytesToInt(dm.read(rootAddress), 0);
+		return Node.getNode(address);
+	}
+	
 	//给出叶子节点时,叶子节点加着读锁
-	private Node findLeafNode(Object key) {
+	private Node findLeafNode(Object key, boolean onlyRead) {
 		int i = 0;
 		Node p = getRootNode();
 		
@@ -55,9 +61,16 @@ class Tree {
 				lt.unlockS(p.pos);
 				lt.lockS(rightPos);
 				p = p.getRight();
-				i = 0;
 				continue;
 			}
+        	
+        	
+        	if (IndexUtil.compareTo(key, p.keys[0], type) < 0 && !onlyRead) {
+        		lt.update(p.pos);
+    			p.keys[0] = key;
+    			p.writeBackToDM();
+    			lt.degrade(p.pos);
+    		}
         	
 			while (i < p.n-1 && IndexUtil.compareTo(key, p.keys[i+1], type) >= 0) { 
 				i++;
@@ -71,25 +84,35 @@ class Tree {
 	}
 	
 	int ssearch(Object key) {
-		Node node = findLeafNode(key);
-		if (IndexUtil.compareTo(key, node.keys[0], type) < 0) {
+		Node node = findLeafNode(key, true);
+		if (node.n == 0 || IndexUtil.compareTo(key, node.keys[0], type) < 0) {
 			lt.unlockS(node.pos);
 			return -1;
 		}
 		int i = 0;
-		while (i < node.n-1 && IndexUtil.compareTo(key, node.keys[i+1], type) >= 0) { 
-			i++;
-		}
-		if (IndexUtil.compareTo(key, node.keys[i], type) == 0) {
+		while (true) {
+			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
+				int rightPos = node.rightPos;
+				lt.unlockS(node.pos);
+				lt.lockS(rightPos);
+				node = node.getRight();
+				continue;
+			}
+			
+			while (i < node.n-1 && IndexUtil.compareTo(key, node.keys[i+1], type) >= 0) { 
+				i++;
+			}
+			if (IndexUtil.compareTo(key, node.keys[i], type) == 0) {
+				lt.unlockS(node.pos);
+				return node.values[i];
+			} 
 			lt.unlockS(node.pos);
-			return node.values[i];
-		} 
-		lt.unlockS(node.pos);
-		return -1;
+			return -1;
+		}
 	}
 	
 	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
-		Node node = findLeafNode(key);
+		Node node = findLeafNode(key, false);
 		lt.update(node.pos);
 		while (true) {
 			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
@@ -139,7 +162,7 @@ class Tree {
 	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
 		newRoot.add(childNode);
-		newRoot.addToDM();
+		lt.lockX(newRoot.addToDM());
 		return newRoot;
 	}
 	
@@ -193,174 +216,8 @@ class Tree {
 		return pnode;
 	}
 	
-	
-	int search(Object key) {
-		int i = 0;
-		lt.lockS(rootAddress);
-		Node p = Node.getNode(rootAddress);
-		
-		while (true) {
-			
-			if (IndexUtil.compareTo(key, p.keys[0], type) < 0) {
-				lt.unlockS(p.pos);
-				return -1;
-			}
-			
-			while (i < p.n-1 && IndexUtil.compareTo(key, p.keys[i+1], type) >= 0) { 
-				i++;
-			}
-			int nextPos = p.values[i];
-			lt.unlockS(p.pos);
-			
-			if (p.rightPos != -1 && IndexUtil.compareTo(key, p.rightFirstkey, type) >= 0) {
-				int rightPos = p.rightPos;
-				lt.lockS(rightPos);
-				p = p.getRight();
-				i = 0;
-				continue;
-			}
-			
-			if (p.isLeaf()) {
-				if (IndexUtil.compareTo(key, p.keys[i], type) == 0) {
-					return p.values[i];
-				} 
-				return -1;
-			}
-			
-			lt.lockS(nextPos);
-			p = p.getChild(nextPos);
-			i = 0;
-		}
-	}
-	
-	void insert(Object key, int value) throws OutOfDiskSpaceException, IndexDuplicateException {
-		lt.lockS(rootAddress);
-		Node node = Node.getNode(rootAddress);
-		int i = 0;
-		while (true) {
-			if (lt.readToWrite(node.pos)) {
-				//从dm刷新,因为没法做到锁升级
-				node = Node.getNode(node.pos);
-			}
-			if (node.isFull()) {
-				node= node.pos == rootAddress ? 
-						rootSplit(node, key):
-						nodeSplit(node, key);
-			}
-			
-			if (node.isLeaf()) {
-				if (lt.readToWrite(node.pos)) {
-					//从dm刷新,因为没法做到锁升级
-					node = Node.getNode(node.pos);
-				}
-				if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
-					int rightPos = node.rightPos;
-					lt.unlockX(node.pos);
-					lt.lockX(rightPos);
-					node = node.getRight();
-					i = 0;
-					continue;
-				} else {
-					node.add(key, value);
-					node.writeBackToDM();
-					lt.unlockX(node.pos);
-					return;
-				}
-			}
-			
-			if (lt.readToWrite(node.pos)) {
-				//从dm刷新,因为没法做到锁升级
-				node = Node.getNode(node.pos);
-			}
-			if (IndexUtil.compareTo(key, node.keys[0], type) < 0) {
-				node.keys[0] = key;
-				node.writeBackToDM();
-			}
-			lt.writeToRead(node.pos);//锁降级可以实现
-			
-			while (i < node.n-1 && IndexUtil.compareTo(key, node.keys[i+1], type) >= 0) { 
-				i++;
-			}
-			
-			int nextPos = node.values[i];
-			lt.unlockS(node.pos);
-			lt.lockS(nextPos);
-			node = node.getChild(nextPos);
-			i = 0;
-		}
-	}
-	
-	//node == root
-	private Node rootSplit(Node node, Object key) throws OutOfDiskSpaceException, IndexDuplicateException {
-		int mid = node.n/2;
-		Object midKey = node.keys[mid];
-		
-		Node left = new Node(node.isLeaf(), type);
-		left.setParentPos(node.pos);
-		Node right = new Node(node.isLeaf(), type);
-		right.setParentPos(node.pos);
-		
-		node.setIsLeaf(false);
-		
-		for (int j = 0; j < node.n-mid; j++) {
-			right.add(node.keys[mid+j], node.values[mid+j]);
-		}
-		
-		for (int j = 0; j < mid; j++) {
-			left.add(node.keys[j], node.values[j]);
-		}
-		
-		node.clear();
-		int rightPos = right.addToDM();
-		left.setRight(rightPos, right.keys[0]);
-		int leftPos = left.addToDM();
-		node.add(IndexUtil.compareTo(left.keys[0], key, type) < 0 ? left.keys[0] : key, leftPos);
-		node.add(right.keys[0], rightPos);
-		node.writeBackToDM();
-		node = IndexUtil.compareTo(key, midKey, type) >= 0 ? right : left;
-		lt.lockS(node.pos);
-		lt.unlockX(rootAddress);
-		
-		return node;
-	}
-	
-	//NonRoot
-	private Node nodeSplit(Node node, Object key) throws OutOfDiskSpaceException, IndexDuplicateException {
-		
-		int mid = node.n/2;
-		
-		Object midKey = node.keys[mid];
-		
-		Node left = node;
-		Node right = new Node(node.isLeaf(), type);
-		right.setParentPos(node.parentPos);
-		
-		// mid --- node.n
-		for (int j = 0; j < node.n-mid; j++) {
-			right.add(node.keys[mid+j], node.values[mid+j]);
-		}
-		
-		int rightPos = right.addToDM();
-		
-		// 0 --- mid-1
-		left.n = mid;
-		left.setRight(rightPos, right.keys[0]);
-		left.writeBackToDM();
-		lt.unlockX(left.pos);		
-		lt.lockX(left.parentPos);
-		Node father = Node.getNode(left.parentPos);
-		father.add(right.keys[0], rightPos);
-		father.writeBackToDM();
-		lt.unlockX(left.parentPos);
-		
-		lt.lockS(left.pos);
-		return IndexUtil.compareTo(key, midKey, type) >= 0 ? right : left;
-	}
-	
-	
-	
 	@Override
 	public String toString() {
-		return Node.getNode(rootAddress).toTreeString();
+		return getRoot().toTreeString();
 	}
 }

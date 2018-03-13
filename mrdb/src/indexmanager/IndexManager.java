@@ -1,6 +1,9 @@
 package indexmanager;
 
 import tablemanager.Type;
+import transactionManager.TransactionManager;
+import util.DataUtil;
+import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
 
 public class IndexManager {
@@ -20,17 +23,20 @@ public class IndexManager {
 	
 	public void insert(Object key, int address, int rootAddress, Type type) throws OutOfDiskSpaceException, IndexDuplicateException {
 		selectTree(rootAddress, type);
-		tree.get().insert(key, address);
+		tree.get().iinsert(key, address);
 	}
 	
 	public int search(Object key, Type type, int rootAddress) {
 		selectTree(rootAddress, type);
-		return tree.get().search(key);
+		return tree.get().ssearch(key);
 		
 	}
 
 	public int addRootNode(Type type) throws OutOfDiskSpaceException {
-		return new Node(true, type).addToDM();
+		int address = new Node(true, type).addToDM();
+		byte[] bytes = new byte[4];
+		DataUtil.intToBytes(address, 0, bytes);
+		return DataManager.getInstance().insert(bytes, TransactionManager.SUPER_ID);
 	}
 
 	@Override

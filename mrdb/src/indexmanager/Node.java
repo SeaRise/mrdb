@@ -165,17 +165,36 @@ class Node {
 		DataUtil.intToBytes(rightPos, 7, bytes);
 		DataUtil.intToBytes(n, 11, bytes);
 		writeKeyAndValueToBytes(bytes, 15);
+		writeRightFirstkey(bytes, 15);
+		return bytes;
+	}
+	
+	private void writeRightFirstkey(byte[] bytes, int offset) {
 		if (rightPos != -1) {
 			switch(type){
 	        case int32:
-	        	DataUtil.intToBytes((Integer)rightFirstkey, 2*IMSetting.BN*8, bytes);
+	        	DataUtil.intToBytes((Integer)rightFirstkey, offset + 2*IMSetting.BN*8, bytes);
+	        	break;
 	        case long64:
-	        	DataUtil.longToBytes((Long)rightFirstkey, 2*IMSetting.BN*12, bytes);
+	        	DataUtil.longToBytes((Long)rightFirstkey, offset + 2*IMSetting.BN*12, bytes);
+	        	break;
 	        default://type == Type.string64
-	        	DataUtil.stringToBytes((String)rightFirstkey, 2*IMSetting.BN*136, bytes);
+	        	DataUtil.stringToBytes((String)rightFirstkey, offset + 2*IMSetting.BN*136, bytes);
+	        	break;
+	        }
+		} else {
+			switch(type){
+	        case int32:
+	        	DataUtil.intToBytes(-1, offset + 2*IMSetting.BN*8, bytes);
+	        	break;
+	        case long64:
+	        	DataUtil.longToBytes(-1, offset + 2*IMSetting.BN*12, bytes);
+	        	break;
+	        default://type == Type.string64
+	        	DataUtil.stringToBytes(null, offset + 2*IMSetting.BN*136, bytes);
+	        	break;
 	        }
 		}
-		return bytes;
 	}
 	
 	private void writeKeyAndValueToBytes(byte[] bytes, int offset) {
@@ -224,9 +243,7 @@ class Node {
 		} else { // newNode.type == Type.string64
 			len += 2*IMSetting.BN*(132+4);
 		}
-		if (rightFirstkey != null) {
-			len += type.getTypeLen();
-		}
+		len += type.getTypeLen();
 		return len;
 	}
 	
@@ -242,11 +259,14 @@ class Node {
 		if (newNode.rightPos != -1) {
 			switch(newNode.type){
 	        case int32:
-	        	newNode.rightFirstkey = DataUtil.bytesToInt(bytes, 2*IMSetting.BN*8);
+	        	newNode.rightFirstkey = DataUtil.bytesToInt(bytes, 15 + 2*IMSetting.BN*8);
+	        	break;
 	        case long64:
-	        	newNode.rightFirstkey = DataUtil.bytesToLong(bytes, 2*IMSetting.BN*12);
+	        	newNode.rightFirstkey = DataUtil.bytesToLong(bytes, 15 + 2*IMSetting.BN*12);
+	        	break;
 	        default://type == Type.string64
-	        	newNode.rightFirstkey = DataUtil.bytesToString(bytes, 2*IMSetting.BN*136);
+	        	newNode.rightFirstkey = DataUtil.bytesToString(bytes, 15 + 2*IMSetting.BN*136);
+	        	break;
 	        }
 		}
 		return newNode;
