@@ -14,6 +14,24 @@ public class LockTable {
 	}
 	
 	private LockTable() {
+		//new Thread(new ListeningThread()).start();
+	}
+	
+	private class ListeningThread implements Runnable {
+
+		@Override
+		public void run() {
+			while (true) {
+				try {
+					Thread.sleep(100000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				synchronized (LockTable.this) {
+					
+				}
+			}
+		}
 		
 	}
 	

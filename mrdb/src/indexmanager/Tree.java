@@ -46,7 +46,7 @@ class Tree {
 		return Node.getNode(address);
 	}
 	
-	//给出叶子节点时,叶子节点加着读锁
+	//给出叶子节点时,叶子节点加着锁
 	private Node findLeafNode(Object key, boolean onlyRead) {
 		int i = 0;
 		Node p = getRootNode();
@@ -55,25 +55,28 @@ class Tree {
         	if (p.isLeaf()) {
         		if (!onlyRead) {
         			lt.unlockS(p.pos);
+        			lt.lockX(p.pos);
+        			p = Node.getNode(p.pos);
         		}
 				return p;
 			}
         	
         	if (p.rightPos != -1 && IndexUtil.compareTo(key, p.rightFirstkey, type) >= 0) {
 				int rightPos = p.rightPos;
-				lt.unlockS(p.pos);
+	        	lt.unlockS(p.pos);
 				lt.lockS(rightPos);
 				p = p.getRight();
 				continue;
 			}
         	
-        	
-        	if (IndexUtil.compareTo(key, p.keys[0], type) < 0 && !onlyRead) {
-        		lt.update(p.pos);
-    			p.keys[0] = key;
-    			p.writeBackToDM();
-    			lt.degrade(p.pos);
-    		}
+        	/*
+        	if (!onlyRead) {
+        		if (IndexUtil.compareTo(key, p.keys[0], type) < 0) {
+        			p.keys[0] = key;
+        			p.writeBackToDM();
+        		}
+            	lt.degrade(p.pos);
+        	}*/
         	
 			while (i < p.n-1 && IndexUtil.compareTo(key, p.keys[i+1], type) >= 0) { 
 				i++;
@@ -115,10 +118,7 @@ class Tree {
 	}
 	
 	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
-		int pos = findLeafNode(key, false).pos;
-		//lt.update(pos);
-		lt.lockX(pos);
-		Node node = Node.getNode(pos);
+		Node node = findLeafNode(key, false);
 		
 		while (true) {
 			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
@@ -140,12 +140,13 @@ class Tree {
 	
 	//此时node加写锁
 	private void split(Node node, Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
+		Node parent = null;
+		final Object kkey = key;
 		while (node.isFull()) {
-			Node parent = null;
 			Node newNode = null;
 			if (node.isRoot()) {
 				//此时parent加锁,node加锁
-				parent = createNewRootNode(node);
+				parent = createNewRootNode(node, kkey);
 				node.parentPos = parent.pos;
 				newNode = createNewNode(node, key, value);
 				updateRootAddress(parent.pos);
@@ -156,6 +157,8 @@ class Tree {
 				key = newNode.keys[0];
 				value = newNode.pos;
 				parent = getParentNode(node, key);
+				parent.keys[0] = IndexUtil.compareTo(kkey, parent.keys[0], type) < 0 ? 
+						kkey : parent.keys[0];
 			}
 			
 			lt.unlockX(node.pos);
@@ -163,13 +166,24 @@ class Tree {
 		}
 		node.add(key, value);
 		node.writeBackToDM();
+		
+		while (!node.isRoot()) {
+			parent = getParentNode(node, key);
+			parent.keys[0] = IndexUtil.compareTo(kkey, parent.keys[0], type) < 0 ? 
+					kkey : parent.keys[0];
+			parent.writeBackToDM();
+			lt.unlockX(node.pos);
+			node = parent;
+		}
+		
 		lt.unlockX(node.pos);
 	}
 	
 	//创建新的根节点,同时加锁
-	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
+	private Node createNewRootNode(Node childNode, final Object kkey) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
-		newRoot.add(childNode);
+		newRoot.add(IndexUtil.compareTo(kkey, childNode.keys[0], type) < 0 ? 
+				kkey : childNode.keys[0], childNode.pos);
 		lt.lockX(newRoot.addToDM());
 		return newRoot;
 	}

@@ -10,7 +10,7 @@ class Test <E extends Comparable<E>> {
 	public static void main(String[] args) throws OutOfDiskSpaceException, IndexDuplicateException, InterruptedException {
 		
 		int rootAddress = im.addRootNode(Type.int32);
-		System.out.println(rootAddress);
+		//System.out.println(rootAddress);
 		/*
 		for (int i = 5999; i > -1; i--) {
 			im.insert(i, i, rootAddress, Type.int32);
@@ -44,9 +44,9 @@ class Test <E extends Comparable<E>> {
 		
 		@Override
 		public void run() {
-			for (int i = 1; i < 200; i+=3) {
+			for (int i = 199; i >= 1; i-=3) {
 				try {
-					System.out.println(i);
+					System.out.println(i + " c1");
 					im.insert(i, i, rootAddress, Type.int32);
 					//System.out.println(im.toString());
 				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
@@ -70,9 +70,9 @@ class Test <E extends Comparable<E>> {
 		
 		@Override
 		public void run() {
-			for (int i = 0; i < 200; i+=3) {
+			for (int i = 198; i >= 0; i-=3) {
 				try {
-					System.out.println(i);
+					System.out.println(i + " c2");
 					im.insert(i, i, rootAddress, Type.int32);
 					//System.out.println(im.toString());
 				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
@@ -97,7 +97,7 @@ class Test <E extends Comparable<E>> {
 		public void run() {
 			for (int i = 2; i < 200; i+=3) {
 				try {
-					System.out.println(i);
+					System.out.println(i + " c3");
 					im.insert(i, i, rootAddress, Type.int32);
 					//System.out.println(im.toString());
 				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
