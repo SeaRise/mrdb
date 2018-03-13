@@ -116,8 +116,8 @@ class Tree {
 		lt.update(node.pos);
 		while (true) {
 			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
-				lt.lockX(node.rightPos);
 				lt.unlockX(node.pos);
+				lt.lockX(node.rightPos);
 				node = node.getRight();
 			} else {
 				break;
@@ -138,6 +138,7 @@ class Tree {
 			Node parent = null;
 			Node newNode = null;
 			if (node.isRoot()) {
+				//此时parent加锁,node加锁
 				parent = createNewRootNode(node);
 				node.parentPos = parent.pos;
 				newNode = createNewNode(node, key, value);
@@ -159,6 +160,7 @@ class Tree {
 		lt.unlockX(node.pos);
 	}
 	
+	//创建新的根节点,同时加锁
 	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
 		newRoot.add(childNode);
@@ -166,7 +168,7 @@ class Tree {
 		return newRoot;
 	}
 	
-	//更新根节点位置,同时给根节点加锁
+	//更新根节点位置
 	private void updateRootAddress(int newAddress) {
 		byte[] bytes = new byte[4];
 		DataUtil.intToBytes(newAddress, 0, bytes);
