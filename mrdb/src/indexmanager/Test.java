@@ -27,7 +27,7 @@ class Test <E extends Comparable<E>> {
 		
 		new Thread(new c1(rootAddress)).start();
 		new Thread(new c2(rootAddress)).start();
-
+		new Thread(new c3(rootAddress)).start();
 		/*
 		Thread.sleep(10000);
 		System.out.println("come");
@@ -44,7 +44,7 @@ class Test <E extends Comparable<E>> {
 		
 		@Override
 		public void run() {
-			for (int i = 1; i < 202; i+=2) {
+			for (int i = 1; i < 200; i+=3) {
 				try {
 					System.out.println(i);
 					im.insert(i, i, rootAddress, Type.int32);
@@ -70,7 +70,32 @@ class Test <E extends Comparable<E>> {
 		
 		@Override
 		public void run() {
-			for (int i = 0; i < 201; i+=2) {
+			for (int i = 0; i < 200; i+=3) {
+				try {
+					System.out.println(i);
+					im.insert(i, i, rootAddress, Type.int32);
+					//System.out.println(im.toString());
+				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				//int ls = im.search(i, Type.int32, rootAddress);
+				//System.out.print(ls + "\n");
+				//System.out.println(im.toString());
+			}
+			System.out.println(im.toString());
+		}
+	}
+	
+	static class c3 implements Runnable {
+		int rootAddress;
+		c3(int rootAddress) {
+			this.rootAddress = rootAddress;
+		}
+		
+		@Override
+		public void run() {
+			for (int i = 2; i < 200; i+=3) {
 				try {
 					System.out.println(i);
 					im.insert(i, i, rootAddress, Type.int32);

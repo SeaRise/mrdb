@@ -53,6 +53,9 @@ class Tree {
 		
         while (true) {
         	if (p.isLeaf()) {
+        		if (!onlyRead) {
+        			lt.unlockS(p.pos);
+        		}
 				return p;
 			}
         	
@@ -112,8 +115,11 @@ class Tree {
 	}
 	
 	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
-		Node node = findLeafNode(key, false);
-		lt.update(node.pos);
+		int pos = findLeafNode(key, false).pos;
+		//lt.update(pos);
+		lt.lockX(pos);
+		Node node = Node.getNode(pos);
+		
 		while (true) {
 			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
 				lt.unlockX(node.pos);
