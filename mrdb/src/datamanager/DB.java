@@ -3,8 +3,6 @@ package datamanager;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import util.DataUtil;
-
 /*存储底层数据
  * 包括索引,页管理,数据
  * */

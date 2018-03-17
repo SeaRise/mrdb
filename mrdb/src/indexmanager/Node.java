@@ -13,6 +13,16 @@ import datamanager.OutOfDiskSpaceException;
  * */
 class Node {
 	
+	static final int LEAF_OFFSET = 0;
+	static final int TYPE_OFFSET = 1;
+	static final int PARENT_POS_OFFSET = 3;
+	static final int RIGHT_POS_OFFSET = 7;
+	static final int N_OFFSET = 11;
+	
+	//static final int 
+	
+	private byte[] bytes = null;
+	
 	Type type;
 	
 	boolean isLeaf;
