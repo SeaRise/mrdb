@@ -14,309 +14,220 @@ import datamanager.OutOfDiskSpaceException;
 class Node {
 	
 	static final int LEAF_OFFSET = 0;
-	static final int TYPE_OFFSET = 1;
-	static final int PARENT_POS_OFFSET = 3;
-	static final int RIGHT_POS_OFFSET = 7;
-	static final int N_OFFSET = 11;
-	
-	//static final int 
+	static final int PARENT_POS_OFFSET = 1;
+	static final int RIGHT_POS_OFFSET = 5;
+	static final int N_OFFSET = 9;
+	static final int VALUE_BASE_OFFSET = 13;
+	final int KEY_BASE_OFFSET;
+	final int RIGHT_FIRST_KEY_OFFSET;
 	
 	private byte[] bytes = null;
 	
-	Type type;
-	
-	boolean isLeaf;
-	
 	int pos = -1;
 	
-	int parentPos = -1;
-	
-	int rightPos = -1;
-	
-	Object[] keys = null;
-	int[] values = null;
-	
-	//右兄弟的第一个key值,用于判断是否右移,没右兄弟为null
-	Object rightFirstkey = null;
-	
-	/*现存关键字的数目
-	 * */
-	int n = 0;
+	final Type type;
 	
 	Node(boolean isLeaf, Type type) {
-		this.isLeaf = isLeaf;
 		this.type = type;
-		initKeyAndValues();
+		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
+		RIGHT_FIRST_KEY_OFFSET = KEY_BASE_OFFSET + 2*IMSetting.BN*type.getTypeLen();
+		bytes = new byte[getBytesLen()];
+		DataUtil.booleanToBytes(isLeaf, LEAF_OFFSET, bytes);
+		DataUtil.intToBytes(-1, PARENT_POS_OFFSET, bytes);
+		DataUtil.intToBytes(-1, RIGHT_POS_OFFSET, bytes);
+		DataUtil.intToBytes(0, N_OFFSET, bytes);
+	}
+	
+	private Node(Type type) {
+		this.type = type;
+		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
+		RIGHT_FIRST_KEY_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*(4+type.getTypeLen());
+	}
+	
+	private void setBytes(byte[] bytes) {
+		this.bytes = bytes;
 	}
 	
 	boolean isRoot() {
-		return parentPos == -1;
+		return getParentPos() == -1;
+	}
+	
+	int getParentPos() {
+		return DataUtil.bytesToInt(bytes, PARENT_POS_OFFSET);
+	}
+	
+	int getRightPos() {
+		return DataUtil.bytesToInt(bytes, RIGHT_POS_OFFSET);
 	}
 	
 	void setParentPos(int parentPos) {
-		this.parentPos = parentPos;
+		DataUtil.intToBytes(parentPos, PARENT_POS_OFFSET, bytes);
 	}
 	
 	void setRight(int rightPos, Object firstKey) {
-		this.rightPos = rightPos;
-		this.rightFirstkey = firstKey;
+		DataUtil.intToBytes(rightPos, RIGHT_POS_OFFSET, bytes);
+		setRightFirstKey(firstKey);
 	}
 	
-	static Node getNode(int address) {
-		return readFromBytes(DataManager.getInstance().read(address), address);
+	Object getRightFirstKey() {
+		switch(getType()){
+        case int32:
+        	return DataUtil.bytesToInt(bytes, RIGHT_FIRST_KEY_OFFSET);
+        case long64:
+        	return DataUtil.bytesToLong(bytes, RIGHT_FIRST_KEY_OFFSET);
+        default://type == Type.string64
+        	return DataUtil.bytesToString(bytes, RIGHT_FIRST_KEY_OFFSET);
+        }
+	}
+	
+	void setRightFirstKey(Object firstKey) {
+		switch(getType()){
+        case int32:
+        	DataUtil.intToBytes((Integer)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	break;
+        case long64:
+        	DataUtil.longToBytes((Long)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	break;
+        default://type == Type.string64
+        	DataUtil.stringToBytes((String)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	break;
+        }
+	}
+	
+	Type getType() {
+		return type;
+	}
+	
+	int getN() {
+		return DataUtil.bytesToInt(bytes, N_OFFSET);
+	}
+	
+	void setN(int n) {
+		DataUtil.intToBytes(n, N_OFFSET, bytes);
+	}
+	
+	Object getKey(int i) {
+		Type type = getType();
+		switch(type){
+        case int32:
+        	return DataUtil.bytesToInt(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        case long64:
+        	return DataUtil.bytesToLong(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        default://type == Type.string64
+        	return DataUtil.bytesToString(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        }
+	}
+	
+	void setKey(int i, Object key) {
+		switch(type){
+        case int32:
+        	DataUtil.intToBytes((Integer)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	break;
+        case long64:
+        	DataUtil.longToBytes((Long)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	break;
+        default://type == Type.string64
+        	DataUtil.stringToBytes((String)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	break;
+        }
+	}
+	
+	int getValue(int i) {
+		return DataUtil.bytesToInt(bytes, VALUE_BASE_OFFSET + i*4);
+	}
+	
+	void setValue(int i, int value) {
+		DataUtil.intToBytes(value, VALUE_BASE_OFFSET + i*4, bytes);
+	}
+	
+	private void movesDown(int offset, int len) {
+		System.arraycopy(bytes, VALUE_BASE_OFFSET + offset*4, bytes, 
+				VALUE_BASE_OFFSET + (offset+1)*4, len*4);
+		int typeLen = getType().getTypeLen();
+		System.arraycopy(bytes, KEY_BASE_OFFSET + offset*typeLen, bytes, 
+				KEY_BASE_OFFSET + (offset+1)*typeLen, len*typeLen);
+	}
+
+	boolean isLeaf() {
+		return DataUtil.bytesToBoolean(bytes, LEAF_OFFSET);
+	}
+	
+	boolean isFull() {
+		return getN() == 2*IMSetting.BN;
+	}
+	
+	void add(Node node) throws IndexDuplicateException {
+		add(node.getKey(0), node.pos);
+	}
+	
+	void add(final Object key, final int value) throws IndexDuplicateException {
+		int n = getN();
+		int i = n;
+		Type type = getType();
+		while (i != 0 && IndexUtil.compareTo(getKey(i-1), key, type) > 0) {
+			i--;
+		}
+		movesDown(i, n-i);
+		
+		//索引重复不被允许
+		if (isLeaf() && i != 0 && IndexUtil.compareTo(key, getKey(i-1), type) == 0) {
+			throw new IndexDuplicateException();
+		}
+		setKey(i, key);
+		setValue(i, value);
+		setN(++n);
+	}
+	
+	void clear() {
+		DataUtil.intToBytes(0, N_OFFSET, bytes);
+	}
+	
+	void removeLast() {
+		DataUtil.intToBytes(DataUtil.bytesToInt(bytes, N_OFFSET)-1, N_OFFSET, bytes);
+	}
+	
+	void setIsLeaf(boolean isLeaf) {
+		DataUtil.booleanToBytes(isLeaf, LEAF_OFFSET, bytes);
+	}
+	
+	int addToDM() throws OutOfDiskSpaceException {
+		pos = DataManager.getInstance().insert(bytes, TransactionManager.SUPER_ID);
+		return pos;
+	}
+	
+	void writeBackToDM() {
+		DataManager.getInstance().update(pos, bytes, TransactionManager.SUPER_ID);
+	}
+	
+	private int getBytesLen() {
+		return RIGHT_FIRST_KEY_OFFSET + type.getTypeLen();
+	}
+	
+	static Node getNode(int address, Type type) {
+		Node node = new Node(type);
+		node.pos = address;
+		node.setBytes(DataManager.getInstance().read(address));
+		return node;
 	}
 	
 	Node getChild(int address) {
-		Node child = getNode(address);
+		Node child = getNode(address, type);
 		child.setParentPos(pos);
 		return child;
 	}
 	
 	Node getRight() {
-		Node right = getNode(this.rightPos);
-		right.setParentPos(parentPos);
+		Node right = getNode(getRightPos(), type);
+		right.setParentPos(getParentPos());
 		return right;
 	}
-
-	private void initKeyAndValues() {
-		keys = new Object[2*IMSetting.BN];
-		values = new int[2*IMSetting.BN];
-	}
-
-	boolean isLeaf() {
-		return isLeaf;
-	}
-	
-	boolean isFull() {
-		return n == 2*IMSetting.BN;
-	}
-	
-	void add(Node node) throws IndexDuplicateException {
-		add(node.keys[0], node.pos);
-	}
-	
-	void add(final Object key, final int value) throws IndexDuplicateException {
-		int i = n;
-		while (i != 0 && IndexUtil.compareTo(keys[i-1], key, type) > 0) {
-			keys[i] = keys[i-1];
-			values[i] = values[i-1];
-			i--;
-		}
-		//索引重复不被允许
-		if (isLeaf() && i != 0 && IndexUtil.compareTo(key, keys[i-1], type) == 0) {
-			throw new IndexDuplicateException();
-		}
-		keys[i] = key;
-		values[i] = value;
-		n++;
-	}
-	
-	long remove(final Object key) {
-		int i = 0;
-		long value = -1;
-		while (!key.equals(keys[i])) {
-			i++;
-		}
-		value =values[i];
-		while (i != n-1) {
-			keys[i] = keys[i+1];
-			values[i] = values[i+1];
-			i++;
-		}
-		n--;
-		return value;
-	}
-	
-	void removeByIndex(int i) {
-		while (i != n-1) {
-			keys[i] = keys[i+1];
-			values[i] = values[i+1];
-			i++;
-		}
-		n--;
-	}
-	
-	void updateKey(Object oldKey, Object newKey) {
-		int i = 0;
-		for (;!keys[i].equals(oldKey) && i < n; i++);
-		
-		if (i != n) {
-			keys[i] = newKey; 
-		}
-	}
-	
-	void clear() {
-		initKeyAndValues();
-		n = 0;
-	}
-	
-	void removeLast() {
-		n--;
-	}
-	
-	void setIsLeaf(boolean isLeaf) {
-		this.isLeaf = isLeaf;
-	}
-	
-	int addToDM() throws OutOfDiskSpaceException {
-		pos = DataManager.getInstance().insert(writeToBytes(), TransactionManager.SUPER_ID);
-		return pos;
-	}
-	
-	void writeBackToDM() {
-		DataManager.getInstance().update(pos, writeToBytes(), TransactionManager.SUPER_ID);
-	}
-	
-	byte[] writeToBytes() {
-		byte[] bytes = new byte[getBytesLen()];
-		DataUtil.booleanToBytes(isLeaf(), 0, bytes);
-		DataUtil.typeToBytes(type, 1, bytes);
-		DataUtil.intToBytes(parentPos, 3, bytes);
-		DataUtil.intToBytes(rightPos, 7, bytes);
-		DataUtil.intToBytes(n, 11, bytes);
-		writeKeyAndValueToBytes(bytes, 15);
-		writeRightFirstkey(bytes, 15);
-		return bytes;
-	}
-	
-	private void writeRightFirstkey(byte[] bytes, int offset) {
-		if (rightPos != -1) {
-			switch(type){
-	        case int32:
-	        	DataUtil.intToBytes((Integer)rightFirstkey, offset + 2*IMSetting.BN*8, bytes);
-	        	break;
-	        case long64:
-	        	DataUtil.longToBytes((Long)rightFirstkey, offset + 2*IMSetting.BN*12, bytes);
-	        	break;
-	        default://type == Type.string64
-	        	DataUtil.stringToBytes((String)rightFirstkey, offset + 2*IMSetting.BN*136, bytes);
-	        	break;
-	        }
-		} else {
-			switch(type){
-	        case int32:
-	        	DataUtil.intToBytes(-1, offset + 2*IMSetting.BN*8, bytes);
-	        	break;
-	        case long64:
-	        	DataUtil.longToBytes(-1, offset + 2*IMSetting.BN*12, bytes);
-	        	break;
-	        default://type == Type.string64
-	        	DataUtil.stringToBytes(null, offset + 2*IMSetting.BN*136, bytes);
-	        	break;
-	        }
-		}
-	}
-	
-	private void writeKeyAndValueToBytes(byte[] bytes, int offset) {
-		if (type == Type.int32) {
-			int i = 0;
-			for (; i < n; i++) {
-				DataUtil.intToBytes((Integer)keys[i], offset + i*8, bytes);
-				DataUtil.intToBytes(values[i], offset + i*8 + 4, bytes);
-			}
-			//补齐数组
-			for (; i < 2*IMSetting.BN; i++) {
-				DataUtil.intToBytes(-1, offset + i*8, bytes);
-				DataUtil.intToBytes(-1, offset + i*8 + 4, bytes);
-			}
-		} else if (type == Type.long64) {
-			int i = 0;
-			for (; i < n; i++) {
-				DataUtil.longToBytes((Long)keys[i], offset + i*12, bytes);
-				DataUtil.intToBytes(values[i], offset + i*12 + 8, bytes);
-			}
-			//补齐数组
-			for (; i < 2*IMSetting.BN; i++) {
-				DataUtil.longToBytes(-1, offset + i*12, bytes);
-				DataUtil.intToBytes(-1, offset + i*12 + 8, bytes);
-			}
-		} else { // newNode.type == Type.string64
-			int i = 0;
-			for (; i < n; i++) {
-				DataUtil.stringToBytes((String)keys[i], offset + i*136, bytes);
-				DataUtil.intToBytes(values[i], offset + i*136 + 132, bytes);
-			}
-			//补齐数组
-			for (; i < 2*IMSetting.BN; i++) {
-				DataUtil.stringToBytes(null, offset + i*136, bytes);
-				DataUtil.intToBytes(-1, offset + i*136 + 132, bytes);
-			}
-		}
-	}
-	
-	private int getBytesLen() {
-		int len = 1+2+4+4+4;
-		if (this.type == Type.int32) {
-			len += 2*IMSetting.BN*(4+4);
-		} else if (this.type == Type.long64) {
-			len += 2*IMSetting.BN*(8+4);
-		} else { // newNode.type == Type.string64
-			len += 2*IMSetting.BN*(132+4);
-		}
-		len += type.getTypeLen();
-		return len;
-	}
-	
-	//从bytes读node
-	static Node readFromBytes(byte[] bytes, int address) {
-		//System.out.println("len" + bytes.length);
-		Node newNode = new Node(DataUtil.bytesToBoolean(bytes, 0), DataUtil.bytesToType(1, bytes));
-		newNode.pos = address;
-		newNode.parentPos = DataUtil.bytesToInt(bytes, 3);
-		newNode.rightPos = DataUtil.bytesToInt(bytes, 7);
-		newNode.n = DataUtil.bytesToInt(bytes, 11);
-		readKeyAndValueFromBytes(newNode, bytes, 15);
-		if (newNode.rightPos != -1) {
-			switch(newNode.type){
-	        case int32:
-	        	newNode.rightFirstkey = DataUtil.bytesToInt(bytes, 15 + 2*IMSetting.BN*8);
-	        	break;
-	        case long64:
-	        	newNode.rightFirstkey = DataUtil.bytesToLong(bytes, 15 + 2*IMSetting.BN*12);
-	        	break;
-	        default://type == Type.string64
-	        	newNode.rightFirstkey = DataUtil.bytesToString(bytes, 15 + 2*IMSetting.BN*136);
-	        	break;
-	        }
-		}
-		return newNode;
-	}
-	
-	private static void readKeyAndValueFromBytes(Node newNode, byte[] bytes, int offset) {
-		if (newNode.type == Type.int32) {
-			for (int i = 0; i < newNode.n; i++) {
-				newNode.keys[i] = new Integer(DataUtil.bytesToInt(bytes, offset + i*8));
-				newNode.values[i] = DataUtil.bytesToInt(bytes, offset + i*8 + 4);
-			}
-		} else if (newNode.type == Type.long64) {
-			for (int i = 0; i < newNode.n; i++) {
-				newNode.keys[i] = new Long(DataUtil.bytesToLong(bytes, offset + i*12));
-				newNode.values[i] = DataUtil.bytesToInt(bytes, offset + i*12 + 8);
-			}
-		} else { // newNode.type == Type.string64
-			for (int i = 0; i < newNode.n; i++) {
-				newNode.keys[i] = DataUtil.bytesToString(bytes, offset + i*136);
-				newNode.values[i] = DataUtil.bytesToInt(bytes, offset + i*136 + 132);
-			}
-		}
-	}
-	
-	
-	
 	
 	@Override
 	public String toString() {
-		/*
-		StringBuffer sb = new StringBuffer(pos + " " + isLeaf + " " + n + " ");
+		StringBuffer sb = new StringBuffer(isLeaf() + "");
+		int n = getN();
 		for (int i = 0; i < n; i++) {
-			sb.append("{" + keys[i] + "," + values[i] + "}");
-		}
-		sb.append('\n');
-		return sb.toString();
-		*/
-		StringBuffer sb = new StringBuffer(isLeaf + "");
-		for (int i = 0; i < n; i++) {
-			sb.append(" " + keys[i]);
+			sb.append(" " + getKey(i));
 		}
 		sb.append('\n');
 		return sb.toString();
@@ -325,8 +236,9 @@ class Node {
 	public String toTreeString() {
 		StringBuffer sb = new StringBuffer(this.toString());
 		if (!this.isLeaf()) {
+			int n = getN();
 			for (int i = 0; i < n; i++) {
-				sb.append(Node.getNode(values[i]).toTreeString());
+				sb.append(Node.getNode(getValue(i), type).toTreeString());
 			}
 		}
 		return sb.toString();

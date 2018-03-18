@@ -37,13 +37,13 @@ class Tree {
 		DataManager dm = DataManager.getInstance();
 		int address = DataUtil.bytesToInt(dm.read(rootAddress), 0);
 		lt.lockS(address);
-		return Node.getNode(address);
+		return Node.getNode(address, type);
 	}
 	
 	private Node getRoot() {
 		DataManager dm = DataManager.getInstance();
 		int address = DataUtil.bytesToInt(dm.read(rootAddress), 0);
-		return Node.getNode(address);
+		return Node.getNode(address, type);
 	}
 	
 	//给出叶子节点时,叶子节点加着锁
@@ -56,32 +56,24 @@ class Tree {
         		if (!onlyRead) {
         			lt.unlockS(p.pos);
         			lt.lockX(p.pos);
-        			p = Node.getNode(p.pos);
+        			p = Node.getNode(p.pos, type);
         		}
 				return p;
 			}
         	
-        	if (p.rightPos != -1 && IndexUtil.compareTo(key, p.rightFirstkey, type) >= 0) {
-				int rightPos = p.rightPos;
+        	int rightPos = p.getRightPos();
+        	if (rightPos != -1 && IndexUtil.compareTo(key, p.getRightFirstKey(), type) >= 0) {
 	        	lt.unlockS(p.pos);
 				lt.lockS(rightPos);
 				p = p.getRight();
 				continue;
 			}
         	
-        	/*
-        	if (!onlyRead) {
-        		if (IndexUtil.compareTo(key, p.keys[0], type) < 0) {
-        			p.keys[0] = key;
-        			p.writeBackToDM();
-        		}
-            	lt.degrade(p.pos);
-        	}*/
-        	
-			while (i < p.n-1 && IndexUtil.compareTo(key, p.keys[i+1], type) >= 0) { 
+        	int n = p.getN();
+			while (i < n-1 && IndexUtil.compareTo(key, p.getKey(i+1), type) >= 0) { 
 				i++;
 			}
-			int nextPos = p.values[i];
+			int nextPos = p.getValue(i);
 			lt.unlockS(p.pos);
 			lt.lockS(nextPos);
 			p = p.getChild(nextPos);
@@ -91,26 +83,27 @@ class Tree {
 	
 	int ssearch(Object key) {
 		Node node = findLeafNode(key, true);
-		if (node.n == 0 || IndexUtil.compareTo(key, node.keys[0], type) < 0) {
+		if (node.getN() == 0 || IndexUtil.compareTo(key, node.getKey(0), type) < 0) {
 			lt.unlockS(node.pos);
 			return -1;
 		}
 		int i = 0;
 		while (true) {
-			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
-				int rightPos = node.rightPos;
+			int rightPos = node.getRightPos();
+			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
 				lt.unlockS(node.pos);
 				lt.lockS(rightPos);
 				node = node.getRight();
 				continue;
 			}
 			
-			while (i < node.n-1 && IndexUtil.compareTo(key, node.keys[i+1], type) >= 0) { 
+			int n = node.getN();
+			while (i < n-1 && IndexUtil.compareTo(key, node.getKey(i+1), type) >= 0) { 
 				i++;
 			}
-			if (IndexUtil.compareTo(key, node.keys[i], type) == 0) {
+			if (IndexUtil.compareTo(key, node.getKey(i), type) == 0) {
 				lt.unlockS(node.pos);
-				return node.values[i];
+				return node.getValue(i);
 			} 
 			lt.unlockS(node.pos);
 			return -1;
@@ -121,9 +114,10 @@ class Tree {
 		Node node = findLeafNode(key, false);
 		
 		while (true) {
-			if (node.rightPos != -1 && IndexUtil.compareTo(key, node.rightFirstkey, type) >= 0) {
+			int rightPos = node.getRightPos();
+			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
 				lt.unlockX(node.pos);
-				lt.lockX(node.rightPos);
+				lt.lockX(rightPos);
 				node = node.getRight();
 			} else {
 				break;
@@ -147,18 +141,18 @@ class Tree {
 			if (node.isRoot()) {
 				//此时parent加锁,node加锁
 				parent = createNewRootNode(node, kkey);
-				node.parentPos = parent.pos;
+				node.setParentPos(parent.pos);
 				newNode = createNewNode(node, key, value);
 				updateRootAddress(parent.pos);
-				key = newNode.keys[0];
+				key = newNode.getKey(0);
 				value = newNode.pos;
 			} else {
 				newNode = createNewNode(node, key, value);
-				key = newNode.keys[0];
+				key = newNode.getKey(0);
 				value = newNode.pos;
 				parent = getParentNode(node, key);
-				parent.keys[0] = IndexUtil.compareTo(kkey, parent.keys[0], type) < 0 ? 
-						kkey : parent.keys[0];
+				Object pkey = parent.getKey(0);
+				parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
 			}
 			
 			lt.unlockX(node.pos);
@@ -169,8 +163,8 @@ class Tree {
 		
 		while (!node.isRoot()) {
 			parent = getParentNode(node, key);
-			parent.keys[0] = IndexUtil.compareTo(kkey, parent.keys[0], type) < 0 ? 
-					kkey : parent.keys[0];
+			Object pkey = parent.getKey(0);
+			parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
 			parent.writeBackToDM();
 			lt.unlockX(node.pos);
 			node = parent;
@@ -182,8 +176,8 @@ class Tree {
 	//创建新的根节点,同时加锁
 	private Node createNewRootNode(Node childNode, final Object kkey) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
-		newRoot.add(IndexUtil.compareTo(kkey, childNode.keys[0], type) < 0 ? 
-				kkey : childNode.keys[0], childNode.pos);
+		Object ckey = childNode.getKey(0);
+		newRoot.add(IndexUtil.compareTo(kkey, ckey, type) < 0 ? kkey : ckey, childNode.pos);
 		lt.lockX(newRoot.addToDM());
 		return newRoot;
 	}
@@ -197,28 +191,29 @@ class Tree {
 	
 	//把node分裂,同时把key,value插入,此时node加锁
 	private Node createNewNode(Node node, Object key, int value) throws OutOfDiskSpaceException, IndexDuplicateException {
-		int mid = node.n/2;
+		int n = node.getN();
+		int mid = n/2;
 		
 		Node left = node;
 		Node right = new Node(node.isLeaf(), type);
-		right.setParentPos(node.parentPos);
+		right.setParentPos(node.getParentPos());
 		
 		// mid --- node.n
-		for (int j = 0; j < node.n-mid; j++) {
-			right.add(node.keys[mid+j], node.values[mid+j]);
+		for (int j = 0; j < n-mid; j++) {
+			right.add(node.getKey(mid+j), node.getValue(mid+j));
 		}
 		// 0 --- mid-1
-		left.n = mid;
+		left.setN(mid);
 		
 		//插入key,value
-		if (IndexUtil.compareTo(key, right.keys[0], type) >= 0) {
+		if (IndexUtil.compareTo(key, right.getKey(0), type) >= 0) {
 			right.add(key, value);
 		} else {
 			left.add(key, value);
 		}
 		
 		int rightPos = right.addToDM();
-		left.setRight(rightPos, right.keys[0]);
+		left.setRight(rightPos, right.getKey(0));
 		left.writeBackToDM();
 		
 		return right;
@@ -226,10 +221,11 @@ class Tree {
 	
 	//对父节点加锁,可能要右移,包括右移
 	private Node getParentNode(Node node, Object key) {
-		lt.lockX(node.parentPos);
-		Node pnode = Node.getNode(node.parentPos);
-		while (pnode.rightPos != -1 && IndexUtil.compareTo(key, pnode.rightFirstkey, type) >= 0) {
-			int rightPos = pnode.rightPos;
+		int parentPos = node.getParentPos();
+		lt.lockX(parentPos);
+		Node pnode = Node.getNode(parentPos, type);
+		int rightPos;
+		while ((rightPos = pnode.getRightPos()) != -1 && IndexUtil.compareTo(key, pnode.getRightFirstKey(), type) >= 0) {
 			lt.unlockX(pnode.pos);
 			lt.lockX(rightPos);
 			pnode = pnode.getRight();
