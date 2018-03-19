@@ -11,9 +11,6 @@ class IndexItem {
 	//当前项被加锁多少次
 	private AtomicInteger count = new AtomicInteger(0);
 	
-	//用来保障锁升级,不一定能用到.....
-	private final ReentrantLock lock = new ReentrantLock();
-	
 	final int address;
 	
 	IndexItem(int address) {
@@ -26,16 +23,12 @@ class IndexItem {
 	
 	void lockX() {
 		count.incrementAndGet();
-		lock.lock();
 		rwlock.writeLock().lock();
-		lock.unlock();
 	}
 	
 	void lockS() {
 		count.incrementAndGet();
-		lock.lock();
 		rwlock.readLock().lock();
-		lock.unlock();
 	}
 	
 	void unlockS() {
@@ -46,20 +39,6 @@ class IndexItem {
 	void unlockX() {
 		count.decrementAndGet();
 		rwlock.writeLock().unlock();
-	}
-	
-	void update() {
-		lock.lock();
-		rwlock.readLock().unlock();
-		rwlock.writeLock().lock();
-		lock.unlock();
-	}
-	
-	void degrade() {
-		lock.lock();
-		rwlock.writeLock().unlock();
-		rwlock.readLock().lock();
-		lock.unlock();
 	}
 	
 	boolean isWriting() {

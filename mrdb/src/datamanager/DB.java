@@ -69,16 +69,15 @@ class DB {
 		}
 	}
 	
-	Page readPage(int pageIndex) {
+	Page readPage(int pageIndex, Page page) {
 		long address = pageIndex << DMSetting.CHANGE_OFFSET;
-		byte[] pageContent = new byte[DMSetting.FRAME_SIZE];
 		try {
 			dbFile.seek(address);
-			dbFile.readFully(pageContent);
+			dbFile.readFully(page.getContent());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		return new Page(pageContent);
+		return page;
 	}
 }

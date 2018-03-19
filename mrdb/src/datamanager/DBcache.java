@@ -24,13 +24,13 @@ class DBcache {
 	
 	//用于!isFull()
 	int addPage(int pageIndex) {
-		cache[usedNum] =  db.readPage(pageIndex);
+		cache[usedNum] =  db.readPage(pageIndex, new Page());
 		return usedNum++;
 	}
 	
 	//用于isFull()
 	void replacePage(int pageIndex, int pageFrameNo) {
-		cache[pageFrameNo] = db.readPage(pageIndex);
+		cache[pageFrameNo] = db.readPage(pageIndex, cache[pageFrameNo]);
 	}
 	
 	void writeBackToDick(int pageFrameNo, int pageIndex) {

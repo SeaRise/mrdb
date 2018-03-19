@@ -88,16 +88,4 @@ public class LockTable {
 		findItem(address).unlockX();
 		rwlock.readLock().unlock();
 	}
-	
-	public void update(int address) {
-		rwlock.readLock().lock();
-		findItem(address).update();
-		rwlock.readLock().unlock();
-	}
-	
-	public void degrade(int address) {
-		rwlock.readLock().lock();
-		findItem(address).degrade();
-		rwlock.readLock().unlock();
-	}
 }

@@ -8,8 +8,8 @@ class Page {
 	
 	private byte[] pageContent;
 	
-	Page(byte[] pageContent) {
-		this.pageContent = pageContent;
+	Page() {
+		this.pageContent = new byte[DMSetting.FRAME_SIZE];
 	}
 	
 	byte[] getDataItem(int offset) {

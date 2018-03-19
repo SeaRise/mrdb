@@ -58,9 +58,9 @@ public class DataUtil {
 	 /**  
 	    * byte数组中取long数值，本方法适用于(低位在后，高位在前)的顺序。和LongToBytes（）配套使用 
 	    */  
-	public static int bytesToLong(byte[] src, int offset) {  
-	    int value;    
-	    value = (int) ( ((src[offset] & 0xFF)<<56)  
+	public static long bytesToLong(byte[] src, int offset) {  
+	    long value;    
+	    value = (long) ( ((src[offset] & 0xFF)<<56)  
 	            |((src[offset+1] & 0xFF)<<48)  
 	            |((src[offset+2] & 0xFF)<<40)  
 	            |((src[offset+3] & 0xFF)<<32)  
