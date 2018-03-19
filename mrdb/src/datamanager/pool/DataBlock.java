@@ -29,6 +29,16 @@ public class DataBlock {
 			DataUtil.intToBytes(value, ipos, bytess[i]);
 		} else {
 			//分写在两个数组
+			int shift = 24;
+			while (shift >= 0) {
+				if (ipos == bytess[i].length) {
+					i++;
+					ipos = 0;
+				}
+				bytess[i][ipos] = (byte) ((value>>shift) & 0XFF);;
+				ipos++;
+				shift -= 8;
+			}
 		}
 	}
 	
@@ -39,8 +49,19 @@ public class DataBlock {
 			return DataUtil.bytesToInt(bytess[i], ipos);
 		} else {
 			//分读在两个数组
+			int value = 0;    
+			int shift = 24;
+			while (shift >= 0) {
+				if (ipos == bytess[i].length) {
+					i++;
+					ipos = 0;
+				}
+				value |= (long) (bytess[i][ipos] & 0xFF) << shift;
+				ipos++;
+				shift -= 8;
+			}
+			return value;
 		}
-		return -1;
 	}
     
     void writeLong(int pos, long value) {
@@ -77,7 +98,7 @@ public class DataBlock {
 					i++;
 					ipos = 0;
 				}
-				value |= (long) (bytess[i][ipos] & 0xFF) << 56;
+				value |= (long) (bytess[i][ipos] & 0xFF) << shift;
 				ipos++;
 				shift -= 8;
 			}
@@ -89,7 +110,7 @@ public class DataBlock {
     	DataUtil.booleanToBytes(value, pos, bytess[getI(pos)]);
     }
     
-    boolean readBoolean(int pos) {
+    boolean getBoolean(int pos) {
     	return DataUtil.bytesToBoolean(bytess[getI(pos)], pos);
     }
     
