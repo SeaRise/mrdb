@@ -12,7 +12,8 @@ class Test <E extends Comparable<E>> {
 		int rootAddress = im.addRootNode(Type.int32);
 		//System.out.println(rootAddress);
 		
-		for (int i = 1; i < 100; i++) {
+		/*
+		for (int i = 0; i < 6000; i++) {
 			im.insert(i, i, rootAddress, Type.int32);
 			int ls = im.search(i, Type.int32, rootAddress);
 			System.out.print(ls + "\n");
@@ -24,11 +25,11 @@ class Test <E extends Comparable<E>> {
 			int ls = im.search(i, Type.int32, rootAddress);
 		    System.out.print(ls + "\n");
 		}
-		System.out.println(im.toString());
+		System.out.println(im.toString());*/
 		
-		//new Thread(new c1(rootAddress)).start();
-		//new Thread(new c2(rootAddress)).start();
-		//new Thread(new c3(rootAddress)).start();
+		new Thread(new c1(rootAddress)).start();
+		new Thread(new c2(rootAddress)).start();
+		new Thread(new c3(rootAddress)).start();
 	}
 	
 	static class c1 implements Runnable {

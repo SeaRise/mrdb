@@ -56,6 +56,7 @@ class Tree {
         while (true) {
         	if (p.isLeaf()) {
         		if (!onlyRead) {
+        			p.release();
         			lt.unlockS(p.pos);
         			lt.lockX(p.pos);
         			p = Node.getNode(p.pos, type);
@@ -65,9 +66,10 @@ class Tree {
         	
         	int rightPos = p.getRightPos();
         	if (rightPos != -1 && IndexUtil.compareTo(key, p.getRightFirstKey(), type) >= 0) {
-	        	lt.unlockS(p.pos);
+        		p.release();
+        		lt.unlockS(p.pos);
 				lt.lockS(rightPos);
-				p = p.getRight();
+				p = p.getRight(rightPos);
 				continue;
 			}
         	
@@ -76,6 +78,7 @@ class Tree {
 				i++;
 			}
 			int nextPos = p.getValue(i);
+			p.release();
 			lt.unlockS(p.pos);
 			lt.lockS(nextPos);
 			p = p.getChild(nextPos);
@@ -86,6 +89,7 @@ class Tree {
 	int ssearch(Object key) {
 		Node node = findLeafNode(key, true);
 		if (node.getN() == 0 || IndexUtil.compareTo(key, node.getKey(0), type) < 0) {
+			node.release();
 			lt.unlockS(node.pos);
 			return -1;
 		}
@@ -93,9 +97,10 @@ class Tree {
 		while (true) {
 			int rightPos = node.getRightPos();
 			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
+				node.release();
 				lt.unlockS(node.pos);
 				lt.lockS(rightPos);
-				node = node.getRight();
+				node = node.getRight(rightPos);
 				continue;
 			}
 			
@@ -104,23 +109,28 @@ class Tree {
 				i++;
 			}
 			if (IndexUtil.compareTo(key, node.getKey(i), type) == 0) {
+				int value = node.getValue(i);
+				node.release();
 				lt.unlockS(node.pos);
-				return node.getValue(i);
+				return value;
 			} 
+			node.release();
 			lt.unlockS(node.pos);
 			return -1;
 		}
 	}
 	
 	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
+		//此时node加写锁
 		Node node = findLeafNode(key, false);
 		
 		while (true) {
 			int rightPos = node.getRightPos();
 			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
+				node.release();
 				lt.unlockX(node.pos);
 				lt.lockX(rightPos);
-				node = node.getRight();
+				node = node.getRight(rightPos);
 			} else {
 				break;
 			}
@@ -130,6 +140,7 @@ class Tree {
 		} else {
 			node.add(key, value);
 			node.writeBackToDM();
+			node.release();
 			lt.unlockX(node.pos);
 		}
 	}
@@ -148,15 +159,18 @@ class Tree {
 				updateRootAddress(parent.pos);
 				key = newNode.getKey(0);
 				value = newNode.pos;
+				newNode.release();
 			} else {
 				newNode = createNewNode(node, key, value);
 				key = newNode.getKey(0);
 				value = newNode.pos;
+				newNode.release();
 				parent = getParentNode(node, key);
 				Object pkey = parent.getKey(0);
 				parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
 			}
 			
+			node.release();
 			lt.unlockX(node.pos);
 			node = parent;
 		}
@@ -168,10 +182,12 @@ class Tree {
 			Object pkey = parent.getKey(0);
 			parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
 			parent.writeBackToDM();
+			node.release();
 			lt.unlockX(node.pos);
 			node = parent;
 		}
 		
+		node.release();
 		lt.unlockX(node.pos);
 	}
 	
@@ -230,7 +246,7 @@ class Tree {
 		while ((rightPos = pnode.getRightPos()) != -1 && IndexUtil.compareTo(key, pnode.getRightFirstKey(), type) >= 0) {
 			lt.unlockX(pnode.pos);
 			lt.lockX(rightPos);
-			pnode = pnode.getRight();
+			pnode = pnode.getRight(rightPos);
 			continue;
 		}
 		return pnode;

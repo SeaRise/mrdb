@@ -37,7 +37,7 @@ class Node {
 		bytes.writeBoolean(LEAF_OFFSET, isLeaf);
 		bytes.writeInt(PARENT_POS_OFFSET, -1);
 		bytes.writeInt(RIGHT_POS_OFFSET, -1);
-		bytes.writeInt(N_OFFSET, -1);
+		bytes.writeInt(N_OFFSET, 0);
 	}
 
 	private Node(Type type) {
@@ -48,6 +48,7 @@ class Node {
 
 	void release() {
 		bytes.release();
+		bytes = null;
 	}
 	
 	private void setBytes(DataBlock bytes) {
@@ -228,9 +229,9 @@ class Node {
 		return child;
 	}
 	
-	Node getRight() {
-		Node right = getNode(getRightPos(), type);
-		right.setParentPos(getParentPos());
+	Node getRight(int rightPos) {
+		Node right = getNode(rightPos, type);
+		//right.setParentPos(getParentPos());
 		return right;
 	}
 	
