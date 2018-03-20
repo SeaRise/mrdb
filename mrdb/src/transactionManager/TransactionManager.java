@@ -5,6 +5,7 @@ import java.io.RandomAccessFile;
 
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.DataBlock;
 
 public class TransactionManager {
 	
@@ -76,23 +77,23 @@ public class TransactionManager {
 		updateTransactionId(transactionId);
 	}
 	
-	public byte[] read(int virtualAddress) {
+	public DataBlock read(int virtualAddress) {
 		return dm.read(virtualAddress);
 	}
 	
-	public int insert(byte[] dataItem, boolean isTransaction) throws OutOfDiskSpaceException {
+	public int insert(DataBlock dataItem, boolean isTransaction) throws OutOfDiskSpaceException {
 		return isTransaction ? transactionInsert(dataItem) : onlyInsert(dataItem);
 	}
 	
-	private int onlyInsert(byte[] dataItem) throws OutOfDiskSpaceException {
+	private int onlyInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
 		return dm.insert(dataItem, SUPER_ID);
 	}
 	
-	private int transactionInsert(byte[] dataItem) throws OutOfDiskSpaceException {
+	private int transactionInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
 		return dm.insert(dataItem, transactionId);
 	}
 	
-	public void update(int virtualAddress, byte[] dataItem, boolean isTransaction) {
+	public void update(int virtualAddress, DataBlock dataItem, boolean isTransaction) {
 		if (isTransaction) {
 			transactionUpdate(virtualAddress, dataItem);
 		} else {
@@ -100,11 +101,11 @@ public class TransactionManager {
 		}
 	}
 	
-	private void onlyUpdate(int virtualAddress, byte[] dataItem) {
+	private void onlyUpdate(int virtualAddress, DataBlock dataItem) {
 		dm.update(virtualAddress, dataItem, SUPER_ID);
 	}
 	
-	private void transactionUpdate(int virtualAddress, byte[] dataItem) {
+	private void transactionUpdate(int virtualAddress, DataBlock dataItem) {
 		dm.update(virtualAddress, dataItem, transactionId);
 	}
 }

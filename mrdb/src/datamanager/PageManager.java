@@ -1,5 +1,7 @@
 package datamanager;
 
+import datamanager.pool.BlockPoolExecutor;
+import datamanager.pool.DataBlock;
 import transactionManager.TransactionManager;
 import util.DataUtil;
 
@@ -25,12 +27,8 @@ class PageManager {
 	void init(DataManager dm) {
 		this.dm = dm;
 		for (int i = 0; i < DMSetting.PAGE_NUM; i++) {
-			lastOffsets[i] = getOffset(dm.read(DMSetting.PM_FIRST_ADDRESS + i*8));
+			lastOffsets[i] = dm.read(DMSetting.PM_FIRST_ADDRESS + i*8).getInt(0);
 		}
-	}
-	
-	private int getOffset(byte[] item) {
-		return DataUtil.bytesToInt(item, 0);
 	}
 	
 	//返回虚拟地址
@@ -55,8 +53,8 @@ class PageManager {
 	
 	//更新尾偏移量
 	private void updatePageInf(int pageIndex) {
-        byte[] dataItem = new byte[4];
-        DataUtil.intToBytes(lastOffsets[pageIndex], 0, dataItem);
+		DataBlock dataItem = BlockPoolExecutor.getInstance().getDataBlock(4);
+		dataItem.writeInt(0, lastOffsets[pageIndex]);
 	    dm.update(DMSetting.PM_FIRST_ADDRESS + pageIndex*8, dataItem, TransactionManager.SUPER_ID);
 	}
 	

@@ -5,6 +5,8 @@ import transactionManager.TransactionManager;
 import util.DataUtil;
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.BlockPoolExecutor;
+import datamanager.pool.DataBlock;
 
 
 /*b+树的一个节点
@@ -21,7 +23,7 @@ class Node {
 	final int KEY_BASE_OFFSET;
 	final int RIGHT_FIRST_KEY_OFFSET;
 	
-	private byte[] bytes = null;
+	private DataBlock bytes = null;
 	
 	int pos = -1;
 	
@@ -31,20 +33,24 @@ class Node {
 		this.type = type;
 		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
 		RIGHT_FIRST_KEY_OFFSET = KEY_BASE_OFFSET + 2*IMSetting.BN*type.getTypeLen();
-		bytes = new byte[getBytesLen()];
-		DataUtil.booleanToBytes(isLeaf, LEAF_OFFSET, bytes);
-		DataUtil.intToBytes(-1, PARENT_POS_OFFSET, bytes);
-		DataUtil.intToBytes(-1, RIGHT_POS_OFFSET, bytes);
-		DataUtil.intToBytes(0, N_OFFSET, bytes);
+		bytes = BlockPoolExecutor.getInstance().getDataBlock(getBytesLen());
+		bytes.writeBoolean(LEAF_OFFSET, isLeaf);
+		bytes.writeInt(PARENT_POS_OFFSET, -1);
+		bytes.writeInt(RIGHT_POS_OFFSET, -1);
+		bytes.writeInt(N_OFFSET, -1);
 	}
-	
+
 	private Node(Type type) {
 		this.type = type;
 		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
 		RIGHT_FIRST_KEY_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*(4+type.getTypeLen());
 	}
+
+	void release() {
+		bytes.release();
+	}
 	
-	private void setBytes(byte[] bytes) {
+	private void setBytes(DataBlock bytes) {
 		this.bytes = bytes;
 	}
 	
@@ -53,43 +59,43 @@ class Node {
 	}
 	
 	int getParentPos() {
-		return DataUtil.bytesToInt(bytes, PARENT_POS_OFFSET);
+		return bytes.getInt(PARENT_POS_OFFSET);
 	}
 	
 	int getRightPos() {
-		return DataUtil.bytesToInt(bytes, RIGHT_POS_OFFSET);
+		return bytes.getInt(RIGHT_POS_OFFSET);
 	}
 	
 	void setParentPos(int parentPos) {
-		DataUtil.intToBytes(parentPos, PARENT_POS_OFFSET, bytes);
+		bytes.writeInt(PARENT_POS_OFFSET, parentPos);
 	}
 	
 	void setRight(int rightPos, Object firstKey) {
-		DataUtil.intToBytes(rightPos, RIGHT_POS_OFFSET, bytes);
+		bytes.writeInt(RIGHT_POS_OFFSET, rightPos);
 		setRightFirstKey(firstKey);
 	}
 	
 	Object getRightFirstKey() {
 		switch(getType()){
         case int32:
-        	return DataUtil.bytesToInt(bytes, RIGHT_FIRST_KEY_OFFSET);
+        	return bytes.getInt(RIGHT_FIRST_KEY_OFFSET);
         case long64:
-        	return DataUtil.bytesToLong(bytes, RIGHT_FIRST_KEY_OFFSET);
+        	return bytes.getLong(RIGHT_FIRST_KEY_OFFSET);
         default://type == Type.string64
-        	return DataUtil.bytesToString(bytes, RIGHT_FIRST_KEY_OFFSET);
+        	return bytes.getString(RIGHT_FIRST_KEY_OFFSET);
         }
 	}
 	
 	void setRightFirstKey(Object firstKey) {
 		switch(getType()){
         case int32:
-        	DataUtil.intToBytes((Integer)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	bytes.writeInt(RIGHT_FIRST_KEY_OFFSET, (Integer)firstKey);
         	break;
         case long64:
-        	DataUtil.longToBytes((Long)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	bytes.writeLong(RIGHT_FIRST_KEY_OFFSET, (Long)firstKey);
         	break;
         default://type == Type.string64
-        	DataUtil.stringToBytes((String)firstKey, RIGHT_FIRST_KEY_OFFSET, bytes);
+        	bytes.writeString(RIGHT_FIRST_KEY_OFFSET, (String)firstKey);
         	break;
         }
 	}
@@ -99,57 +105,63 @@ class Node {
 	}
 	
 	int getN() {
-		return DataUtil.bytesToInt(bytes, N_OFFSET);
+		return bytes.getInt(N_OFFSET);
 	}
 	
 	void setN(int n) {
-		DataUtil.intToBytes(n, N_OFFSET, bytes);
+		bytes.writeInt(N_OFFSET, n);
 	}
 	
 	Object getKey(int i) {
 		Type type = getType();
 		switch(type){
         case int32:
-        	return DataUtil.bytesToInt(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        	return bytes.getInt(KEY_BASE_OFFSET + i*type.getTypeLen());
         case long64:
-        	return DataUtil.bytesToLong(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        	return bytes.getLong(KEY_BASE_OFFSET + i*type.getTypeLen());
         default://type == Type.string64
-        	return DataUtil.bytesToString(bytes, KEY_BASE_OFFSET + i*type.getTypeLen());
+        	return bytes.getString(KEY_BASE_OFFSET + i*type.getTypeLen());
         }
 	}
 	
 	void setKey(int i, Object key) {
 		switch(type){
         case int32:
-        	DataUtil.intToBytes((Integer)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	bytes.writeInt(KEY_BASE_OFFSET + i*type.getTypeLen(), (Integer)key);
         	break;
         case long64:
-        	DataUtil.longToBytes((Long)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	bytes.writeLong(KEY_BASE_OFFSET + i*type.getTypeLen(), (Long)key);
         	break;
         default://type == Type.string64
-        	DataUtil.stringToBytes((String)key, KEY_BASE_OFFSET + i*type.getTypeLen(), bytes);
+        	bytes.writeString(KEY_BASE_OFFSET + i*type.getTypeLen(), (String)key);
         	break;
         }
 	}
 	
 	int getValue(int i) {
-		return DataUtil.bytesToInt(bytes, VALUE_BASE_OFFSET + i*4);
+		return bytes.getInt(VALUE_BASE_OFFSET + i*4);
 	}
 	
 	void setValue(int i, int value) {
-		DataUtil.intToBytes(value, VALUE_BASE_OFFSET + i*4, bytes);
+		bytes.writeInt(VALUE_BASE_OFFSET + i*4, value);
 	}
 	
 	private void movesDown(int offset, int len) {
+		if (len == 0) {
+			return;
+		}
+		bytes.movesDown(VALUE_BASE_OFFSET + offset*4, 4, len*4);
+		int typeLen = getType().getTypeLen();
+		bytes.movesDown(KEY_BASE_OFFSET + offset*typeLen, typeLen, len*typeLen);
+		/*
 		System.arraycopy(bytes, VALUE_BASE_OFFSET + offset*4, bytes, 
 				VALUE_BASE_OFFSET + (offset+1)*4, len*4);
-		int typeLen = getType().getTypeLen();
 		System.arraycopy(bytes, KEY_BASE_OFFSET + offset*typeLen, bytes, 
-				KEY_BASE_OFFSET + (offset+1)*typeLen, len*typeLen);
+				KEY_BASE_OFFSET + (offset+1)*typeLen, len*typeLen);*/
 	}
 
 	boolean isLeaf() {
-		return DataUtil.bytesToBoolean(bytes, LEAF_OFFSET);
+		return bytes.getBoolean(LEAF_OFFSET);
 	}
 	
 	boolean isFull() {
@@ -179,15 +191,15 @@ class Node {
 	}
 	
 	void clear() {
-		DataUtil.intToBytes(0, N_OFFSET, bytes);
+		bytes.writeInt(N_OFFSET, 0);
 	}
 	
 	void removeLast() {
-		DataUtil.intToBytes(DataUtil.bytesToInt(bytes, N_OFFSET)-1, N_OFFSET, bytes);
+		bytes.writeInt(N_OFFSET, bytes.getInt(N_OFFSET)-1);
 	}
 	
 	void setIsLeaf(boolean isLeaf) {
-		DataUtil.booleanToBytes(isLeaf, LEAF_OFFSET, bytes);
+		bytes.writeBoolean(LEAF_OFFSET, isLeaf);
 	}
 	
 	int addToDM() throws OutOfDiskSpaceException {

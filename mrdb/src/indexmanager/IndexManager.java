@@ -5,6 +5,8 @@ import transactionManager.TransactionManager;
 import util.DataUtil;
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.BlockPoolExecutor;
+import datamanager.pool.DataBlock;
 
 public class IndexManager {
 	
@@ -34,9 +36,9 @@ public class IndexManager {
 
 	public int addRootNode(Type type) throws OutOfDiskSpaceException {
 		int address = new Node(true, type).addToDM();
-		byte[] bytes = new byte[4];
-		DataUtil.intToBytes(address, 0, bytes);
-		return DataManager.getInstance().insert(bytes, TransactionManager.SUPER_ID);
+		DataBlock block = BlockPoolExecutor.getInstance().getDataBlock(4);
+		block.writeInt(0, address);
+		return DataManager.getInstance().insert(block, TransactionManager.SUPER_ID);
 	}
 
 	@Override

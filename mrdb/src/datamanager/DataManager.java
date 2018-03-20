@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import transactionManager.TransactionType;
+import datamanager.pool.DataBlock;
 
 /**执行顺序是:
  *    申请块
@@ -58,7 +59,7 @@ public class DataManager {
 	}
 	
 	//物理地址只在DBCache中使用,对外提供虚拟地址.
-	public int insert(byte[] dataItem, int transactionId) throws OutOfDiskSpaceException {
+	public int insert(DataBlock dataItem, int transactionId) throws OutOfDiskSpaceException {
 		int virtualAddress = -1;
 		int physicalAddress = -1;
 		final ReentrantLock lock = this.lock;
@@ -88,9 +89,9 @@ public class DataManager {
 		return virtualAddress;
 	}
 	
-	public byte[] read(int virtualAddress) {
+	public DataBlock read(int virtualAddress) {
 		int physicalAddress = -1;
-		byte[] dataItem = null;
+		DataBlock dataItem = null;
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
@@ -102,9 +103,9 @@ public class DataManager {
 		return dataItem;
 	}
 	
-	public void update(int virtualAddress, byte[] dataItem, int transactionId) {
+	public void update(int virtualAddress, DataBlock dataItem, int transactionId) {
 		int physicalAddress = -1;
-		byte[] oldItem = null;
+		DataBlock oldItem = null;
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {

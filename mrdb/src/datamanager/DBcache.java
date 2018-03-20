@@ -1,5 +1,7 @@
 package datamanager;
 
+import datamanager.pool.DataBlock;
+
 class DBcache {
 	
 	private Page[] cache = new Page[DMSetting.FRAME_NUM];
@@ -37,13 +39,13 @@ class DBcache {
 		db.updatePage(cache[pageFrameNo], pageIndex);
 	}
 	
-	byte[] read(int physicalAddress) {
+	DataBlock read(int physicalAddress) {
 		Page page = cache[getPageFrameNo(physicalAddress)];
 		int offset = getOffset(physicalAddress);
 		return page.getDataItem(offset);
 	}
 	
-	void update(int physicalAddress, byte[] dataItem) {
+	void update(int physicalAddress, DataBlock dataItem) {
 		Page page = cache[getPageFrameNo(physicalAddress)];
 		int offset = getOffset(physicalAddress);
 		

@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 
 import transactionManager.TransactionManager;
 import transactionManager.TransactionType;
+import datamanager.pool.DataBlock;
 
 class LogFileManager {
 	
@@ -33,7 +34,7 @@ class LogFileManager {
 	}
 	
 	void login(int transactionId, TransactionType type, int virtualAddress, 
-			byte[] oldItem, byte[] newItem) {
+			DataBlock oldItem, DataBlock newItem) {
 		try {
 			logFile.seek(logFile.length());
 			logFile.writeInt(transactionId);
@@ -44,14 +45,14 @@ class LogFileManager {
 				logFile.writeInt(0);
 			} else {
 				logFile.writeInt(oldItem.length);
-				logFile.write(oldItem);
+				oldItem.writeToFile(logFile);
 			}
 			//new block
 			if (newItem == null) {
 				logFile.writeInt(0);
 			} else {
 				logFile.writeInt(newItem.length);
-				logFile.write(newItem);
+				newItem.writeToFile(logFile);
 			}
 			//计算出Unit的大小,便于倒着读文件
 			logFile.writeInt(4+2+4+ // transactionId+type+virtualAddress
@@ -68,11 +69,9 @@ class LogFileManager {
 		TransactionType type = TransactionType.readFromFile(logFile); 
 		int virtualAddress = logFile.readInt(); 
 		int oldLen = logFile.readInt();
-		byte[] oldItem =  new byte[oldLen];
-		logFile.readFully(oldItem);
-		int newLen = logFile.readInt();				
-		byte[] newItem =  new byte[newLen];
-		logFile.readFully(newItem);
+		DataBlock oldItem =  DataBlock.readFromFile(logFile, oldLen);
+		int newLen = logFile.readInt();		
+		DataBlock newItem =  DataBlock.readFromFile(logFile, newLen);
 		logFile.readInt();//把Unit的大小读了,在这里没用
 		return new LogUnit(transactionId, type, virtualAddress, oldItem, newItem);
 	}

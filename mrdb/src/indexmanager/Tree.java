@@ -9,6 +9,8 @@ import transactionManager.TransactionManager;
 import util.DataUtil;
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.BlockPoolExecutor;
+import datamanager.pool.DataBlock;
 
 
 /*b+树
@@ -35,14 +37,14 @@ class Tree {
 	//自动加读锁
 	private Node getRootNode() {
 		DataManager dm = DataManager.getInstance();
-		int address = DataUtil.bytesToInt(dm.read(rootAddress), 0);
+		int address = dm.read(rootAddress).getInt(0);
 		lt.lockS(address);
 		return Node.getNode(address, type);
 	}
 	
 	private Node getRoot() {
 		DataManager dm = DataManager.getInstance();
-		int address = DataUtil.bytesToInt(dm.read(rootAddress), 0);
+		int address = dm.read(rootAddress).getInt(0);
 		return Node.getNode(address, type);
 	}
 	
@@ -184,9 +186,9 @@ class Tree {
 	
 	//更新根节点位置
 	private void updateRootAddress(int newAddress) {
-		byte[] bytes = new byte[4];
-		DataUtil.intToBytes(newAddress, 0, bytes);
-		DataManager.getInstance().update(rootAddress, bytes, TransactionManager.SUPER_ID);
+		DataBlock block = BlockPoolExecutor.getInstance().getDataBlock(4);
+		block.writeInt(0, newAddress);
+		DataManager.getInstance().update(rootAddress, block, TransactionManager.SUPER_ID);
 	}
 	
 	//把node分裂,同时把key,value插入,此时node加锁

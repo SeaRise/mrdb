@@ -2,6 +2,7 @@ package versionmanager;
 
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.DataBlock;
 
 /*
  * 线程同步问题待解决,暂时采用自旋锁
@@ -13,11 +14,11 @@ public class VersionManager {
 	
 	private DataManager dm = DataManager.getInstance();
 	
-	public synchronized int insert(byte[] dataItem, int transactionId) throws OutOfDiskSpaceException {
+	public synchronized int insert(DataBlock dataItem, int transactionId) throws OutOfDiskSpaceException {
 		return dm.insert(dataItem, transactionId);
 	}
 	
-	public synchronized byte[] read(int transactionId, int virtualAddress) {
+	public synchronized DataBlock read(int transactionId, int virtualAddress) {
 		
 		while (!lm.canRead(transactionId, virtualAddress)) {
 			try {
@@ -32,7 +33,7 @@ public class VersionManager {
 		return dm.read(virtualAddress);
 	}
 	
-	public synchronized void update(int virtualAddress, byte[] dataItem, int transactionId) {
+	public synchronized void update(int virtualAddress, DataBlock dataItem, int transactionId) {
 		
 		while(!lm.canWrite(transactionId, virtualAddress)) {
 			try {

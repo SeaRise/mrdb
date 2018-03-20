@@ -1,6 +1,7 @@
 package datamanager;
 
-import util.DataUtil;
+import datamanager.pool.BlockPoolExecutor;
+import datamanager.pool.DataBlock;
 
 class Test {
 	
@@ -8,22 +9,28 @@ class Test {
 		
 		DataManager dm = DataManager.getInstance();
 		
-		int[] addr = new int[1900];
-		for (int i = 0; i < 1900; i++) {
-			byte[] dataItem = new byte[132];
-			DataUtil.stringToBytes(i + "", 0, dataItem);
+		int[] addr = new int[200000];
+		for (int i = 0; i < 200000; i++) {
+			//System.out.println("index" + i);
+			DataBlock dataItem = BlockPoolExecutor.getInstance().getDataBlock(4);
+			dataItem.writeInt(0, i);
+			//System.out.println(dataItem.getInt(0));
 			addr[i] = dm.insert(dataItem, 0);
+			dataItem.release();
 			dataItem = dm.read(addr[i]);
-			System.out.println(dataItem.length);
-			System.out.println(DataUtil.bytesToString(dataItem, 0));
-			//System.out.println(i);
+			//System.out.println("len" + dataItem.length);
+			System.out.println(dataItem.getInt(0));
+			dataItem.release();
+			//System.out.println(addr[i]);
 		}
+		
 		System.out.println();
-		for (int i = 1899; i >= 0; i--) {
-			byte[] dataItem = new byte[132];
+		for (int i = 199999; i >= 0; i--) {
+			DataBlock dataItem;
 			dataItem = dm.read(addr[i]);
-			System.out.println(dataItem.length);
-			System.out.println(DataUtil.bytesToString(dataItem, 0));
+			//System.out.println(dataItem.length);
+			System.out.println(dataItem.getInt(0));
+			dataItem.release();
 			//System.out.println(i);
 		}
 		
