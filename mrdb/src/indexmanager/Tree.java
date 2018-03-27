@@ -23,6 +23,8 @@ class Tree {
 	//锁表
 	static LockTable lt = LockTable.getInstance();
 	
+	final static int BN = 3; 
+	
 	/*根节点地址
 	 * */
 	final int rootAddress; 	

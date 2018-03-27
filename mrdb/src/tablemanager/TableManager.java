@@ -1,7 +1,13 @@
 package tablemanager;
 
+import indexmanager.IndexDuplicateException;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import util.ParentPath;
 import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.DataBlock;
 
 /*一个疑惑:
  * 多线程事务是指一个用户连接内的多个事务并行还是多个用户连接的事务并行
@@ -15,70 +21,30 @@ public class TableManager {
 		ParentPath.createPath();
 		exec = new TBMExecutor();
 	}
-	/*
-	public void createTable(String tableName, String[] fieldNames, 
-			Type[] types, boolean[] isEstablishIndex) {
-		try {
-			exec.createTable(tableName, fieldNames, types, isEstablishIndex);
-		} catch (TableNameRepeatException e) {
-			System.out.println("table name has exist");
-		}
+	
+	public void createTable(String tableName, Type keyType) throws TableNameRepeatException, IOException, OutOfDiskSpaceException {
+		exec.createTable(tableName, keyType);
 	}
 	
-	/*
 	public void deleteTable(String tableName) {
-		try {
-			exec.deleteTable(tableName);
-		} catch (TableNotFoundException e) {
-			System.out.println("table not found");
-		}
-	}*/
-	/*
-	public void insert(String tableName, DataType[] dataTypes, boolean isTransaction) {
-		try {
-			exec.insert(tableName, dataTypes, isTransaction);
-		} catch (TableNotFoundException e) {
-			System.out.println("table not found");
-		} catch (OutOfDiskSpaceException e) {
-			System.out.println("disk has no more spaces");
-		} 
+		exec.deleteTable(tableName);
 	}
 	
-	public void update(String tableName, DataType[] keyTypes, int[] keyIndexes, 
-			Object[] newValues, int[] valueIndexes, boolean isTransaction) {
-		try {
-			System.out.println(exec.update(
-					tableName, keyTypes, keyIndexes, newValues, valueIndexes, isTransaction));
-		} catch (TableNotFoundException e) {
-			System.out.println("table not found");
-		} 
+	public void selectTable(String tableName) throws IOException, TableNotFoundException {
+		exec.selectTable(tableName);
 	}
 	
-	public void read(String tableName, DataType[] keyTypes, int[] keyIndexes) {
-		try {
-			DataType[][] dt = exec.read(tableName, keyTypes, keyIndexes);
-			if (dt == null) {
-				System.out.println("not found");
-			} else {
-				boolean hasRecord = false;
-				for (int i = 0; i < dt.length; i++) {
-					if (dt[i] == null) {
-						continue;
-					}
-					hasRecord = true;
-					for (int j = 0; j < dt[i].length; j++) {
-						System.out.print(dt[i][j] + " ");
-					}
-					System.out.println();
-				}
-				if (!hasRecord) {
-					System.out.println("not found");
-				}
-			}
-		} catch (TableNotFoundException e) {
-			System.out.println("table not found");
-		} 
-	}*/
+	public void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException {
+		exec.insert(key, value, isTransaction);
+	}
+	
+	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException {
+		exec.update(key, newValue, isTransaction);
+	}
+	
+	public DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {
+		return exec.read(key);
+	}
 	
 	public void start() {
 		exec.start();

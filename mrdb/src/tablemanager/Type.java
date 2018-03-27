@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public enum Type {
-	int32, //32位,4字节
-	long64, //64位,8字节
-	string64;//64个字符,utf-8是不定长编码,字节数很难控制,转换成char[]数组,一个char为两个字节.所以char数组字节数为128
+	int32("int32"), //32位,4字节
+	long64("String"), //64位,8字节
+	string64("string64");//64个字符,utf-8是不定长编码,字节数很难控制,转换成char[]数组,一个char为两个字节.所以char数组字节数为128
 	         //用不完的空间用0补齐
 	         //再加上char[]长度4个字节,共132个字节
+	private String typeName;
 	
 	static int INT32_LEN = 4;
 	static int LONG64_LEN = 8;
@@ -16,6 +17,29 @@ public enum Type {
 	
 	static int TYPE_LEN = 2;//Type设定为2字节
 	
+	Type(String typeName) {
+		this.typeName = typeName;
+	}
+	
+	public static Type getType(String typeName) {
+		if (typeName.equals("int32")) {
+			return int32;
+		} else if (typeName.equals("long64")) {
+			return long64;
+		} else { // newNode.type == Type.string64
+			return string64;
+		}
+	}
+	
+	
+	
+	@Override
+	public String toString() {
+		return typeName;
+	}
+
+
+
 	public int getTypeLen() {
 		if (this == Type.int32) {
 			return INT32_LEN;

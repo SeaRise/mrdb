@@ -31,8 +31,8 @@ class Node {
 	
 	Node(boolean isLeaf, Type type) {
 		this.type = type;
-		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
-		RIGHT_FIRST_KEY_OFFSET = KEY_BASE_OFFSET + 2*IMSetting.BN*type.getTypeLen();
+		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*Tree.BN*4;
+		RIGHT_FIRST_KEY_OFFSET = KEY_BASE_OFFSET + 2*Tree.BN*type.getTypeLen();
 		bytes = BlockPoolExecutor.getInstance().getDataBlock(getBytesLen());
 		bytes.writeBoolean(LEAF_OFFSET, isLeaf);
 		bytes.writeInt(PARENT_POS_OFFSET, -1);
@@ -42,8 +42,8 @@ class Node {
 
 	private Node(Type type) {
 		this.type = type;
-		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*4;
-		RIGHT_FIRST_KEY_OFFSET = VALUE_BASE_OFFSET + 2*IMSetting.BN*(4+type.getTypeLen());
+		KEY_BASE_OFFSET = VALUE_BASE_OFFSET + 2*Tree.BN*4;
+		RIGHT_FIRST_KEY_OFFSET = VALUE_BASE_OFFSET + 2*Tree.BN*(4+type.getTypeLen());
 	}
 
 	void release() {
@@ -166,7 +166,7 @@ class Node {
 	}
 	
 	boolean isFull() {
-		return getN() == 2*IMSetting.BN;
+		return getN() == 2*Tree.BN;
 	}
 	
 	void add(Node node) throws IndexDuplicateException {

@@ -21,26 +21,6 @@ public class DataBlock {
 		this.length = len;
 	}
 	
-	public static void main(String[] args) {
-		DataBlock b = BlockPoolExecutor.getInstance().getDataBlock(64);
-		b.writeInt(0, 1);
-		b.writeInt(4, 2);
-		b.writeInt(8, 3);
-		b.writeInt(12, 4);
-		b.writeInt(16, 5);
-		b.writeInt(20, 6);
-		b.writeInt(24, 7);
-		b.writeInt(28, 8);
-		b.writeInt(32, 9);
-		b.writeInt(36, 10);
-		b.movesDown(0, 4, 40);
-		b.writeInt(0, 0);
-		for (int i = 0; i < 11; i++) {
-			System.out.println(b.getInt(i*4));
-		}
-		
-	}
-	
 	public void movesDown(int offset, int downShift, int len) {
 		int endi = getI(offset);
 		int endipos = getIpos(endi, offset);
@@ -223,6 +203,7 @@ public class DataBlock {
 		}
     }
     
+	
     //先留着,暂时不谢
     //一定会分写在多个数组
 	public void writeString(int pos, String value) {
