@@ -11,7 +11,7 @@ class Test {
 	 */
 	static TableManager tbm = new TableManager();
 	
-	public static void main(String[] args) throws TableNameRepeatException, IOException, OutOfDiskSpaceException {
+	public static void main(String[] args) throws TableNameRepeatException, IOException, OutOfDiskSpaceException, TableCreateFailExceotion {
 		tbm.createTable("fds", Type.int32);
 	}
 

@@ -34,32 +34,46 @@ public class TBMExecutor {
 	private int keyAddress = -1;
 	
 	TBMExecutor() {
-		
 	}
 	
-	void createTable(String tableName, Type keyType) throws TableNameRepeatException, IOException, OutOfDiskSpaceException {
-		
+	void createTable(String tableName, Type keyType) throws TableNameRepeatException, TableCreateFailExceotion {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
-		
+		try {
+			doCreateTable(file, keyType);
+		} catch (IOException | OutOfDiskSpaceException e) {
+			file.delete();
+			throw new TableCreateFailExceotion();
+		}
+	}
+	
+	private void doCreateTable(File file, Type keyType) throws IOException, TableNameRepeatException, OutOfDiskSpaceException {	
 		if (file.exists()) {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-			dis.readUTF();
-			dis.readUTF();
-			dis.readInt();
-			boolean flag = dis.readUTF().equals(TMB_END);
-			dis.close();
-			if (flag) {
-				throw new TableNameRepeatException();
+			try {
+				dis.readUTF();
+				dis.readUTF();
+				dis.readInt();
+				boolean flag = dis.readUTF().equals(TMB_END);
+				dis.close();
+				if (flag) {
+					throw new TableNameRepeatException();
+				}
+				file.delete();
+			} finally {
+				dis.close();
 			}
-			file.delete();
+			
 		}
 		file.createNewFile();
 		DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-		dos.writeUTF(tableName);
-		dos.writeUTF(keyType.toString());
-		dos.writeInt(initKey(keyType));
-		dos.writeUTF(TMB_END);
-		dos.close();
+		try {
+			dos.writeUTF(tableName);
+			dos.writeUTF(keyType.toString());
+			dos.writeInt(initKey(keyType));
+			dos.writeUTF(TMB_END);
+		} finally {
+			dos.close();
+		}
 	}
 	
 	private int initKey(Type keyType) throws OutOfDiskSpaceException {
@@ -74,17 +88,36 @@ public class TBMExecutor {
 		}
 	}
 	
-	public void selectTable(String tableName) throws IOException, TableNotFoundException {
+	public void selectTable(String tableName) throws TableNotFoundException {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
+		try {
+			doSelectTable(file);
+		} catch (IOException e) {
+			this.tableName = null;
+			this.keyType = null;
+			this.keyAddress = -1;
+			file.delete();
+			throw new TableNotFoundException();
+		}
+	}
+	
+	private void doSelectTable(File file) throws TableNotFoundException, IOException {
 		if (file.exists()) {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-			this.tableName = dis.readUTF();
-			this.keyType = Type.getType(dis.readUTF());
-			this.keyAddress = dis.readInt();
-			boolean flag = dis.readUTF().equals(TMB_END);
-			dis.close();
-			if (flag) {
-				return;
+			try {
+				this.tableName = dis.readUTF();
+				this.keyType = Type.getType(dis.readUTF());
+				this.keyAddress = dis.readInt();
+				boolean flag = dis.readUTF().equals(TMB_END);
+				
+				if (flag) {
+					this.tableName = null;
+					this.keyType = null;
+					this.keyAddress = -1;
+					return;
+				}
+			} finally {
+				dis.close();
 			}
 		}
 		file.delete();

@@ -7,7 +7,7 @@ public enum TransactionType {
 	start, //事务开始
 	active,//事务进行
 	commit, //事务提交
-	abort;//事务终止
+	abort;//事务回滚
 	
 	static int TRANSACTION_TYPE_LEN = 2;//Type设定为2字节
 	

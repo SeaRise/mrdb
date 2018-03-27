@@ -9,10 +9,7 @@ import util.ParentPath;
 import datamanager.OutOfDiskSpaceException;
 import datamanager.pool.DataBlock;
 
-/*一个疑惑:
- * 多线程事务是指一个用户连接内的多个事务并行还是多个用户连接的事务并行
- * 目前以后者为准
- * */
+
 public class TableManager {
 	
 	private TBMExecutor exec = null;
@@ -22,7 +19,7 @@ public class TableManager {
 		exec = new TBMExecutor();
 	}
 	
-	public void createTable(String tableName, Type keyType) throws TableNameRepeatException, IOException, OutOfDiskSpaceException {
+	public void createTable(String tableName, Type keyType) throws TableNameRepeatException, IOException, OutOfDiskSpaceException, TableCreateFailExceotion {
 		exec.createTable(tableName, keyType);
 	}
 	
