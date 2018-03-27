@@ -39,14 +39,14 @@ public class TBMExecutor {
 	void createTable(String tableName, Type keyType) throws TableNameRepeatException, TableCreateFailExceotion {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
-			doCreateTable(file, keyType);
+			doCreateTable(tableName, file, keyType);
 		} catch (IOException | OutOfDiskSpaceException e) {
 			file.delete();
 			throw new TableCreateFailExceotion();
 		}
 	}
 	
-	private void doCreateTable(File file, Type keyType) throws IOException, TableNameRepeatException, OutOfDiskSpaceException {	
+	private void doCreateTable(String tableName, File file, Type keyType) throws IOException, TableNameRepeatException, OutOfDiskSpaceException {	
 		if (file.exists()) {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
 			try {
@@ -111,9 +111,6 @@ public class TBMExecutor {
 				boolean flag = dis.readUTF().equals(TMB_END);
 				
 				if (flag) {
-					this.tableName = null;
-					this.keyType = null;
-					this.keyAddress = -1;
 					return;
 				}
 			} finally {
