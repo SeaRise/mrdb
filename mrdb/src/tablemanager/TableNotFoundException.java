@@ -1,6 +1,6 @@
 package tablemanager;
 
 @SuppressWarnings("serial")
-class TableNotFoundException extends Exception {
+public class TableNotFoundException extends Exception {
 	
 }

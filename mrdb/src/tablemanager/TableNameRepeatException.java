@@ -1,6 +1,6 @@
 package tablemanager;
 
 @SuppressWarnings("serial")
-class TableNameRepeatException extends Exception{
+public class TableNameRepeatException extends Exception{
 
 }

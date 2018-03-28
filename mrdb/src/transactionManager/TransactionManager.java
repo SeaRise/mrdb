@@ -1,111 +1,62 @@
 package transactionManager;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import datamanager.DataManager;
-import datamanager.OutOfDiskSpaceException;
-import datamanager.pool.DataBlock;
+
+import util.ParentPath;
 
 public class TransactionManager {
-	
-	private DataManager dm = DataManager.getInstance();
-	
 	public static final int SUPER_ID = 0; //这个事务ID是redo_only事务的编号,即是一条记录就是一个事务
 	
-	public static final int MAX_TRANSACTION_ID = 5000;//transactionId的最大值,一旦达到这个值就到达了检查点.
+	static String tmFileName = ParentPath.tmFileParentName+"tmFile";
 	
-	private int transactionId = -1;
+	private ThreadLocal<Integer> transactionId = new ThreadLocal<Integer>();
 	
-	private RandomAccessFile tmFile = null;
+	private static TransactionManager tm = new TransactionManager();
 	
-	public TransactionManager() {
-		try {
-			tmFile = new RandomAccessFile(TMSetting.tmFileName, "rw");
-			if (tmFile.length() == 0) {
-				updateTransactionId(1);
-				transactionId = 1;
-			} else {
-				transactionId = getTransactionId();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	private TransactionManager() {
 	}
 	
-	private int getTransactionId() throws IOException {
-		tmFile.seek(0);
-		return tmFile.readInt();
+	static public TransactionManager getInstance() {
+		return tm;
 	}
 	
-	private void updateTransactionId(int transactionId) {
-		try {
-			tmFile.seek(0);
-			tmFile.writeInt(transactionId);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	
-	public void startTransaction() {
-		//引入检查点,强制更新刷新入磁盘
-		if (transactionId == MAX_TRANSACTION_ID) {
-			dm.rollback();
-			//把缓存刷入磁盘
-			dm.flush();
-			//将已被检查的日志删除,即是将日志文件清空
-			dm.clearLogFile();
-			//初始化transactionId
-			initTransactionId();
-		}
-		dm.start(transactionId);
+	private RandomAccessFile getAccessFile() throws FileNotFoundException {
+		return new RandomAccessFile(tmFileName, "rw");
 	}
 	
-	private void initTransactionId() {
-		transactionId = 1;
-		updateTransactionId(transactionId);
+	public synchronized int start() throws IOException {
+		RandomAccessFile tmFile = getAccessFile();
+		int xid = (int) tmFile.length()+1;
+		transactionId.set(xid);
+		tmFile.seek(xid-1);
+		tmFile.write(XID.active.getByte());
+		tmFile.close();
+		return xid;
 	}
 	
-	public void abortTransaction() {
-		dm.abort(transactionId++);
-		updateTransactionId(transactionId);
+	public void commit() throws IOException {
+		RandomAccessFile tmFile = getAccessFile();
+		tmFile.seek(getXID()-1);
+		tmFile.write(XID.active.getByte());
 	}
 	
-	public void commitTransaction() {
-		dm.commit(transactionId++);
-		updateTransactionId(transactionId);
+	public synchronized void abort() throws IOException {
+		RandomAccessFile tmFile = getAccessFile();
+		tmFile.seek(getXID()-1);
+		tmFile.write(XID.aborted.getByte());
 	}
 	
-	public DataBlock read(int virtualAddress) {
-		return dm.read(virtualAddress);
+	public XID getXidState(int xid) throws IOException {
+		RandomAccessFile tmFile = getAccessFile();
+		tmFile.seek(xid-1);
+		return XID.getXID(tmFile.readByte());
 	}
 	
-	public int insert(DataBlock dataItem, boolean isTransaction) throws OutOfDiskSpaceException {
-		return isTransaction ? transactionInsert(dataItem) : onlyInsert(dataItem);
-	}
-	
-	private int onlyInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return dm.insert(dataItem, SUPER_ID);
-	}
-	
-	private int transactionInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return dm.insert(dataItem, transactionId);
-	}
-	
-	public void update(int virtualAddress, DataBlock dataItem, boolean isTransaction) {
-		if (isTransaction) {
-			transactionUpdate(virtualAddress, dataItem);
-		} else {
-			onlyUpdate(virtualAddress, dataItem);
-		}
-	}
-	
-	private void onlyUpdate(int virtualAddress, DataBlock dataItem) {
-		dm.update(virtualAddress, dataItem, SUPER_ID);
-	}
-	
-	private void transactionUpdate(int virtualAddress, DataBlock dataItem) {
-		dm.update(virtualAddress, dataItem, transactionId);
+	public int getXID() {
+		return transactionId.get();
 	}
 }

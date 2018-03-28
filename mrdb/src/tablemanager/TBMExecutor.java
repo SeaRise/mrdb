@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import transactionManager.TransactionManager;
 import util.ParentPath;
+import versionmanager.VersionManager;
 import datamanager.OutOfDiskSpaceException;
 import datamanager.pool.DataBlock;
 
@@ -22,7 +23,7 @@ public class TBMExecutor {
 	private static String TMB_END = "end";
 	
 	private IndexManager im = new IndexManager();
-	private TransactionManager tm = new TransactionManager();
+	private VersionManager vm = VersionManager.getInstance();
 	
 	private ThreadLocal<String> tableName = new ThreadLocal<String>();
 	private ThreadLocal<Type> keyType = new ThreadLocal<Type>();
@@ -119,34 +120,34 @@ public class TBMExecutor {
 		throw new TableNotFoundException();
 	}
 	
-	void start() {
-		tm.startTransaction();
+	void start() throws IOException {
+		vm.startTransaction();
 	}
 	
-	void commit() {
-		tm.commitTransaction();
+	void commit() throws IOException {
+		vm.commitTransaction();
 	}
 	
-	void abort() {
-		tm.abortTransaction();
+	void abort() throws IOException {
+		vm.abortTransaction();
 	}
 	
     void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException {
     	check(key);
-    	int valueAddress = tm.insert(value, isTransaction);
+    	int valueAddress = vm.insert(value, isTransaction);
     	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
 	}
 	
 	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException {
 		check(key);
 		int address = im.search(key, keyType.get(), keyAddress.get());
-		tm.update(address, newValue, isTransaction);
+		vm.update(address, newValue, isTransaction);
 	}
 	
 	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {
 		check(key);
 		int address = im.search(key, keyType.get(), keyAddress.get());
-		return tm.read(address);
+		return vm.read(address);
 	}
 	
 	private void check(Object key) throws NotSelectTableException, ObjectMismatchException {

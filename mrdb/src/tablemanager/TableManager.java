@@ -2,7 +2,6 @@ package tablemanager;
 
 import indexmanager.IndexDuplicateException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import util.ParentPath;
@@ -14,7 +13,13 @@ public class TableManager {
 	
 	private TBMExecutor exec = null;
 	
-	public TableManager() {
+	private static TableManager tbm = new TableManager();
+	
+	static public TableManager getInstance() {
+		return tbm;
+	}
+	
+	private TableManager() {
 		ParentPath.createPath();
 		exec = new TBMExecutor();
 	}
@@ -43,15 +48,15 @@ public class TableManager {
 		return exec.read(key);
 	}
 	
-	public void start() {
+	public void start() throws IOException {
 		exec.start();
 	}
 	
-	public void commit() {
+	public void commit() throws IOException {
 		exec.commit();
 	}
 	
-	public void abort() {
+	public void abort() throws IOException {
 		exec.abort();
 	}
 }
