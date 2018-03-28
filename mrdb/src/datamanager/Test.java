@@ -1,7 +1,7 @@
 package datamanager;
 
-import datamanager.pool.BlockPoolExecutor;
-import datamanager.pool.DataBlock;
+import util.pool.BlockPoolExecutor;
+import util.pool.DataBlock;
 
 class Test {
 	

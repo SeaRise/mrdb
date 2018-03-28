@@ -4,9 +4,9 @@ import indexmanager.IndexDuplicateException;
 
 import java.io.IOException;
 
+import util.pool.BlockPoolExecutor;
+import util.pool.DataBlock;
 import datamanager.OutOfDiskSpaceException;
-import datamanager.pool.BlockPoolExecutor;
-import datamanager.pool.DataBlock;
 
 class Test {
 

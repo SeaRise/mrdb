@@ -1,7 +1,7 @@
 package datamanager;
 
 import transactionManager.TransactionType;
-import datamanager.pool.DataBlock;
+import util.pool.DataBlock;
 
 class LogUnit {
 	

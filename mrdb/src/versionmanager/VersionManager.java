@@ -3,9 +3,9 @@ package versionmanager;
 import java.io.IOException;
 
 import transactionManager.TransactionManager;
+import util.pool.DataBlock;
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
-import datamanager.pool.DataBlock;
 
 public class VersionManager {
 	

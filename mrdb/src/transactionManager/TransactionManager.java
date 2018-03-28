@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import datamanager.DataManager;
-
 import util.ParentPath;
 
 public class TransactionManager {
@@ -15,7 +13,7 @@ public class TransactionManager {
 	
 	private ThreadLocal<Integer> transactionId = new ThreadLocal<Integer>();
 	
-	private static TransactionManager tm = new TransactionManager();
+	private static TransactionManager tm = new TransactionManager(); 
 	
 	private TransactionManager() {
 	}

@@ -1,6 +1,6 @@
 package datamanager;
 
-import datamanager.pool.DataBlock;
+import util.pool.DataBlock;
 
 class DBcache {
 	

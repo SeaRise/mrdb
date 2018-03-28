@@ -7,7 +7,7 @@ import java.util.ArrayDeque;
 
 import transactionManager.TransactionManager;
 import transactionManager.TransactionType;
-import datamanager.pool.DataBlock;
+import util.pool.DataBlock;
 
 class LogFileManager {
 	
