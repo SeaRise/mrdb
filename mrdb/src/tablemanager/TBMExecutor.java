@@ -9,18 +9,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import datamanager.OutOfDiskSpaceException;
-import datamanager.pool.DataBlock;
 
 import transactionManager.TransactionManager;
-import util.DataUtil;
 import util.ParentPath;
+import datamanager.OutOfDiskSpaceException;
+import datamanager.pool.DataBlock;
 
 public class TBMExecutor {
 	
@@ -29,9 +24,9 @@ public class TBMExecutor {
 	private IndexManager im = new IndexManager();
 	private TransactionManager tm = new TransactionManager();
 	
-	private String tableName = null;
-	private Type keyType = null;
-	private int keyAddress = -1;
+	private ThreadLocal<String> tableName = new ThreadLocal<String>();
+	private ThreadLocal<Type> keyType = new ThreadLocal<Type>();
+	private ThreadLocal<Integer> keyAddress = new ThreadLocal<Integer>();
 	
 	TBMExecutor() {
 	}
@@ -93,9 +88,9 @@ public class TBMExecutor {
 		try {
 			doSelectTable(file);
 		} catch (IOException e) {
-			this.tableName = null;
-			this.keyType = null;
-			this.keyAddress = -1;
+			this.tableName.set(null);
+			this.keyType.set(null);
+			this.keyAddress.set(null);
 			file.delete();
 			throw new TableNotFoundException();
 		}
@@ -105,9 +100,9 @@ public class TBMExecutor {
 		if (file.exists()) {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
 			try {
-				this.tableName = dis.readUTF();
-				this.keyType = Type.getType(dis.readUTF());
-				this.keyAddress = dis.readInt();
+				this.tableName.set(dis.readUTF());
+				this.keyType.set(Type.getType(dis.readUTF()));
+				this.keyAddress.set(dis.readInt());
 				boolean flag = dis.readUTF().equals(TMB_END);
 				
 				if (flag) {
@@ -117,6 +112,9 @@ public class TBMExecutor {
 				dis.close();
 			}
 		}
+		this.tableName.set(null);
+		this.keyType.set(null);
+		this.keyAddress.set(null);
 		file.delete();
 		throw new TableNotFoundException();
 	}
@@ -136,18 +134,18 @@ public class TBMExecutor {
     void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException {
     	check(key);
     	int valueAddress = tm.insert(value, isTransaction);
-    	im.insert(key, valueAddress, keyAddress, keyType);
+    	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
 	}
 	
 	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException {
 		check(key);
-		int address = im.search(key, keyType, keyAddress);
+		int address = im.search(key, keyType.get(), keyAddress.get());
 		tm.update(address, newValue, isTransaction);
 	}
 	
 	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {
 		check(key);
-		int address = im.search(key, keyType, keyAddress);
+		int address = im.search(key, keyType.get(), keyAddress.get());
 		return tm.read(address);
 	}
 	
@@ -155,15 +153,16 @@ public class TBMExecutor {
 		if (tableName == null) {
 			throw new NotSelectTableException();
 		}
-		if (keyType == Type.int32) {
+		Type type = keyType.get();
+		if (type == Type.int32) {
 			if (!(key instanceof Integer)) {
 				throw new ObjectMismatchException();
 			}
-		} else if (keyType == Type.long64) {
+		} else if (type == Type.long64) {
 			if (!(key instanceof Long)) {
 				throw new ObjectMismatchException();
 			}
-		} else if (keyType == Type.string64) {
+		} else if (type == Type.string64) {
 			if (!(key instanceof String)) {
 				throw new ObjectMismatchException();
 			}
