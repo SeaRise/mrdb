@@ -9,6 +9,8 @@ import datamanager.OutOfDiskSpaceException;
 
 public class VersionManager {
 	
+	private VersionMap vmap = VersionMap.getInstance();
+	
 	private DataManager dm = DataManager.getInstance();
 	
 	private TransactionManager tm = TransactionManager.getInstance();
@@ -45,11 +47,11 @@ public class VersionManager {
 	}
 	
 	private int onlyInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return dm.insert(dataItem, TransactionManager.SUPER_ID);
+		return vmap.insert(dm.insert(dataItem, TransactionManager.SUPER_ID));
 	}
 	
 	private int transactionInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return dm.insert(dataItem, tm.getXID());
+		return vmap.insert(dm.insert(dataItem, tm.getXID()));
 	}
 	
 	public void update(int virtualAddress, DataBlock dataItem, boolean isTransaction) {
