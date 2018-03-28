@@ -16,6 +16,9 @@ class Page {
 	
 	DataBlock getDataItem(int offset) {
 		int len = DataUtil.bytesToInt(pageContent, offset);
+		if (len == 0) {
+			return null;
+		}
 		DataBlock block = BlockPoolExecutor.getInstance().getDataBlock(len);
 		//前四位为dataItem.length
 		byte[][] bytess = block.bytess;
@@ -31,6 +34,10 @@ class Page {
 	}
 	
 	void setDataItem(int offset, DataBlock dataItem) {
+		if (dataItem == null) {
+			DataUtil.intToBytes(0, offset, pageContent);
+			return;
+		}
 		DataUtil.intToBytes(dataItem.length, offset, pageContent);
 		//前四位为dataItem.length
 		int destPos = offset+4;
