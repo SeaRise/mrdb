@@ -31,9 +31,9 @@ public class BlockPoolExecutor {
 	}
 	
 	public DataBlock getDataBlock(int blockLen) {
-		//System.out.println("get" + blockLen);
-		int num = blockLen / BYTES_SIZE;
-		num = num*BYTES_SIZE < blockLen ? num+1 : num;
+		int actualLen = blockLen+8;//加8是为了存xmin和xmax,用于mvcc
+		int num = actualLen / BYTES_SIZE;
+		num = num*BYTES_SIZE < actualLen ? num+1 : num;
 		
 		byte[][] bytess = new byte[num][];
 		int i = 0;
@@ -42,6 +42,6 @@ public class BlockPoolExecutor {
 			bytess[i] = new byte[BYTES_SIZE];
 		}
 		
-		return new DataBlock(bytess, blockLen, this);
+		return new DataBlock(bytess, actualLen, this);
 	}
 }

@@ -83,7 +83,15 @@ public class TBMExecutor {
 		}
 	}
 	
-	public void selectTable(String tableName) throws TableNotFoundException {
+	void upgradeLevel() {
+		vm.upgradeLevel();
+	}
+	
+	void degradeLevel() {
+		vm.degradeLevel();
+	}
+	
+	void selectTable(String tableName) throws TableNotFoundException {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
 			doSelectTable(file);
@@ -131,16 +139,28 @@ public class TBMExecutor {
 		vm.abortTransaction();
 	}
 	
-    void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException {
+    void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException, IOException {
     	check(key);
-    	int valueAddress = vm.insert(value, isTransaction);
+    	if (!isTransaction) {
+    		vm.startTransaction();
+    	}
+    	int valueAddress = vm.insert(value);
     	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
+    	if (!isTransaction) {
+    		vm.commitTransaction();
+    	}
 	}
 	
-	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException {
+	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
 		check(key);
+		if (!isTransaction) {
+    		vm.startTransaction();
+    	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
-		vm.update(address, newValue, isTransaction);
+		vm.update(address, newValue);
+		if (!isTransaction) {
+    		vm.commitTransaction();
+    	}
 	}
 	
 	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {

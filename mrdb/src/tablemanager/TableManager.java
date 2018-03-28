@@ -32,15 +32,23 @@ public class TableManager {
 		exec.deleteTable(tableName);
 	}
 	
+	void upgradeLevel() {
+		exec.upgradeLevel();
+	}
+	
+	void degradeLevel() {
+		exec.degradeLevel();
+	}
+	
 	public void selectTable(String tableName) throws IOException, TableNotFoundException {
 		exec.selectTable(tableName);
 	}
 	
-	public void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException {
+	public void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException, IOException {
 		exec.insert(key, value, isTransaction);
 	}
 	
-	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException {
+	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
 		exec.update(key, newValue, isTransaction);
 	}
 	

@@ -1,8 +1,11 @@
 package versionmanager;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import transactionManager.TransactionManager;
+import util.Entry;
 import util.pool.DataBlock;
 import datamanager.DataManager;
 import datamanager.OutOfDiskSpaceException;
@@ -17,6 +20,12 @@ public class VersionManager {
 	
 	private static VersionManager vm = new VersionManager();
 	
+	ThreadLocal<Integer> level = new ThreadLocal<Integer>();
+	
+	private HashSet<Integer> activeTran = new HashSet<Integer>();
+	
+	ThreadLocal<Set<Integer>> activeSnapShot = new ThreadLocal<Set<Integer>>();
+	
 	static public VersionManager getInstance() {
 		return vm;
 	}
@@ -24,49 +33,60 @@ public class VersionManager {
 	private VersionManager() {
 	}
 	
+	public void upgradeLevel() {
+		level.set(1);
+	}
+	
+	public void degradeLevel() {
+		level.set(0);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private synchronized void addXid(int xid) {
+		//快照
+		activeSnapShot.set((Set<Integer>) activeTran.clone());
+		activeTran.add(xid);
+	}
+	
+	private synchronized void removeXid(int xid) {
+		activeTran.remove(xid);
+	}
+	
 	public void startTransaction() throws IOException {
-		dm.start(tm.start());
+		int xid = tm.start();
+		addXid(xid);
+		dm.start(xid);
 	}
 	
 	public void abortTransaction() throws IOException {
-		dm.abort(tm.getXID());
+		int xid = tm.getXID();
+		removeXid(xid);
+		dm.abort(xid);
 		tm.abort();
 	}
 	
 	public void commitTransaction() throws IOException {
-		dm.commit(tm.getXID());
+		int xid = tm.getXID();
+		removeXid(xid);
+		dm.commit(xid);
 		tm.commit();
 	}
 	
 	public DataBlock read(int virtualAddress) {
-		return dm.read(virtualAddress);
+		Version v = vmap.read(virtualAddress);
+		DataBlock db = dm.read(virtualAddress);
+		v.unlockS();
+		return db;
 	}
 	
-	public int insert(DataBlock dataItem, boolean isTransaction) throws OutOfDiskSpaceException {
-		return isTransaction ? transactionInsert(dataItem) : onlyInsert(dataItem);
+	public int insert(DataBlock dataItem) throws OutOfDiskSpaceException {
+		Entry e = new Entry(dataItem, false);
+		int xid = tm.getXID();
+		e.setXmin(xid);
+		return vmap.insert(dm.insert(e.db, xid));
 	}
 	
-	private int onlyInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return vmap.insert(dm.insert(dataItem, TransactionManager.SUPER_ID));
-	}
-	
-	private int transactionInsert(DataBlock dataItem) throws OutOfDiskSpaceException {
-		return vmap.insert(dm.insert(dataItem, tm.getXID()));
-	}
-	
-	public void update(int virtualAddress, DataBlock dataItem, boolean isTransaction) {
-		if (isTransaction) {
-			transactionUpdate(virtualAddress, dataItem);
-		} else {
-			onlyUpdate(virtualAddress, dataItem);
-		}
-	}
-	
-	private void onlyUpdate(int virtualAddress, DataBlock dataItem) {
-		dm.update(virtualAddress, dataItem, TransactionManager.SUPER_ID);
-	}
-	
-	private void transactionUpdate(int virtualAddress, DataBlock dataItem) {
+	public void update(int virtualAddress, DataBlock dataItem) {
 		dm.update(virtualAddress, dataItem, tm.getXID());
 	}
 }

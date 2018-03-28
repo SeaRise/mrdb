@@ -15,6 +15,7 @@ class VersionMap {
 	
 	private Map<Integer, VersionList> map = new HashMap<Integer, VersionList>();
 	
+	
 	private VersionMap() {}
 	
 	int insert(int firstVersion) throws OutOfDiskSpaceException {
