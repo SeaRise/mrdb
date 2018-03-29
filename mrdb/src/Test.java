@@ -52,14 +52,22 @@ public class Test {
 					db.writeInt(0, i);
 					tbm.insert(i, db, true);
 					db.release();
+					/*
+					db = tbm.read(i, true);
+					System.out.print("c1 " + i + " ");
+					System.out.println(db.getInt(0));
+					db.release();*/
 				}
 				tbm.commit();
+				
+				tbm.start();
 				for (int i = 199; i >= 1; i-=3) {
-					DataBlock db = tbm.read(i);
+					DataBlock db = tbm.read(i, true);
 					System.out.print("c1 " + i + " ");
 					System.out.println(db.getInt(0));
 					db.release();
 				}
+				tbm.commit();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -94,14 +102,22 @@ public class Test {
 					db.writeInt(0, i);
 					tbm.insert(i, db, true);
 					db.release();
+					/*
+					db = tbm.read(i, true);
+					System.out.print("c2 " + i + " ");
+					System.out.println(db.getInt(0));
+					db.release();*/
 				}
 				tbm.commit();
+				
+				tbm.start();
 				for (int i = 198; i >= 0; i-=3) {
-					DataBlock db = tbm.read(i);
+					DataBlock db = tbm.read(i, true);
 					System.out.print("c2 " + i + " ");
 					System.out.println(db.getInt(0));
 					db.release();
 				}
+				tbm.commit();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -135,14 +151,22 @@ public class Test {
 					db.writeInt(0, i);
 					tbm.insert(i, db, true);
 					db.release();
+					/*
+					db = tbm.read(i, true);
+					System.out.print("c3 " + i + " ");
+					System.out.println(db.getInt(0));
+					db.release();*/
 				}
 				tbm.commit();
+				
+				tbm.start();
 				for (int i = 2; i < 200; i+=3) {
-					DataBlock db = tbm.read(i);
+					DataBlock db = tbm.read(i, true);
 					System.out.print("c3 " + i + " ");
 					System.out.println(db.getInt(0));
 					db.release();
 				}
+				tbm.commit();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -13,6 +13,8 @@ public class TransactionManager {
 	
 	private ThreadLocal<Integer> transactionId = new ThreadLocal<Integer>();
 	
+	private ThreadLocal<RandomAccessFile> tmFile = new ThreadLocal<RandomAccessFile>();
+	
 	private static TransactionManager tm = new TransactionManager(); 
 	
 	private TransactionManager() {
@@ -23,7 +25,11 @@ public class TransactionManager {
 	}
 	
 	private RandomAccessFile getAccessFile() throws FileNotFoundException {
-		return new RandomAccessFile(tmFileName, "rw");
+		//return new RandomAccessFile(tmFileName, "rw");
+		if (tmFile.get() == null) {
+			tmFile.set(new RandomAccessFile(tmFileName, "rw"));
+		}
+		return tmFile.get();
 	}
 	
 	//只有start+锁是因为其他的方法不会地址重复,只有start会
@@ -33,7 +39,6 @@ public class TransactionManager {
 		transactionId.set(xid);
 		tmFile.seek(xid-1);
 		tmFile.write(XID.active.getByte());
-		tmFile.close();
 		return xid;
 	}
 	
@@ -41,28 +46,24 @@ public class TransactionManager {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
 		tmFile.write(XID.active.getByte());
-		tmFile.close();
 	}
 	
 	public void abort() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
 		tmFile.write(XID.aborted.getByte());
-		tmFile.close();
 	}
 	
 	public void abort(int xid) throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(xid-1);
 		tmFile.write(XID.aborted.getByte());
-		tmFile.close();
 	}
 	
 	public XID getXidState(int xid) throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(xid-1);
 		XID x = XID.getXID(tmFile.readByte());
-		tmFile.close();
 		return x;
 	}
 	

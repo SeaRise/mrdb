@@ -25,9 +25,10 @@ class Test {
 			db.release();
 		}
 		for (int i = 0; i < 5; i++) {
-			DataBlock db = tbm.read(i);
-			System.out.println(db.getInt(0));
-			db.release();
+			DataBlock db = tbm.read(i, false);
+			System.out.println(db==null);
+			//System.out.println(db.getInt(0));
+			//db.release();
 		}
 	}
 

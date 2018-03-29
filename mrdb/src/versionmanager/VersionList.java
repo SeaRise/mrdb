@@ -51,6 +51,7 @@ class VersionList {
 	void load() {
 		int pos = address;
 		while (pos != -1) {
+			lastAddress = pos;
 			DataBlock db = dm.read(address);
 			int n = db.getInt(0);
 			for (int i = 0; i < n; i++) {
@@ -58,7 +59,6 @@ class VersionList {
 			}
 			pos = db.getInt(PART_LAST_POS);
 			db.release();
-			lastAddress = pos;
 		}
 	}
 	

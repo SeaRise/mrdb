@@ -52,8 +52,8 @@ public class TableManager {
 		exec.update(key, newValue, isTransaction);
 	}
 	
-	public DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException, IOException {
-		return exec.read(key);
+	public DataBlock read(Object key, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
+		return exec.read(key, isTransaction);
 	}
 	
 	public void start() throws IOException {

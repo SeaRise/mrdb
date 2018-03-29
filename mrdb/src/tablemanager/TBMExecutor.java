@@ -163,10 +163,17 @@ public class TBMExecutor {
     	}
 	}
 	
-	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException, IOException {
+	DataBlock read(Object key, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
 		check(key);
+		if (!isTransaction) {
+    		vm.startTransaction();
+    	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
-		return vm.read(address);
+		DataBlock db = vm.read(address);
+		if (!isTransaction) {
+    		vm.commitTransaction();
+    	}
+		return db;
 	}
 	
 	private void check(Object key) throws NotSelectTableException, ObjectMismatchException {
