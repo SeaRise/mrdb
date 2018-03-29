@@ -56,6 +56,10 @@ public class TableManager {
 		return exec.read(key, isTransaction);
 	}
 	
+	public void delete(Object key, boolean isTransaction) throws IOException, NotSelectTableException, ObjectMismatchException {
+		exec.delete(key, isTransaction);
+	}
+	
 	public void start() throws IOException {
 		exec.start();
 	}

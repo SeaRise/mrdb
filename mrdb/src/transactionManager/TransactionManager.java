@@ -45,7 +45,7 @@ public class TransactionManager {
 	public void commit() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
-		tmFile.write(XID.active.getByte());
+		tmFile.write(XID.commit.getByte());
 	}
 	
 	public void abort() throws IOException {
@@ -62,6 +62,7 @@ public class TransactionManager {
 	
 	public XID getXidState(int xid) throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
+		//System.out.println("xid " + xid);
 		tmFile.seek(xid-1);
 		XID x = XID.getXID(tmFile.readByte());
 		return x;

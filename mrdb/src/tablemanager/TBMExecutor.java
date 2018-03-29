@@ -142,38 +142,50 @@ public class TBMExecutor {
     void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException, IOException {
     	check(key);
     	if (!isTransaction) {
-    		vm.startTransaction();
+    		start();
     	}
     	int valueAddress = vm.insert(value);
     	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
     	if (!isTransaction) {
-    		vm.commitTransaction();
+    		commit();
     	}
 	}
 	
 	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException, OutOfDiskSpaceException {
 		check(key);
 		if (!isTransaction) {
-    		vm.startTransaction();
+			start();
     	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
 		vm.update(address, newValue);
 		if (!isTransaction) {
-    		vm.commitTransaction();
+			commit();
     	}
 	}
 	
 	DataBlock read(Object key, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
 		check(key);
 		if (!isTransaction) {
-    		vm.startTransaction();
+			start();
     	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
 		DataBlock db = vm.read(address);
 		if (!isTransaction) {
-    		vm.commitTransaction();
+			commit();
     	}
 		return db;
+	}
+	
+	void delete(Object key, boolean isTransaction) throws IOException, NotSelectTableException, ObjectMismatchException {
+		check(key);
+		if (!isTransaction) {
+			start();
+    	}
+		int address = im.search(key, keyType.get(), keyAddress.get());
+		vm.delete(address);
+		if (!isTransaction) {
+			commit();
+    	}
 	}
 	
 	private void check(Object key) throws NotSelectTableException, ObjectMismatchException {
