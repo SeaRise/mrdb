@@ -30,10 +30,16 @@ public class BlockPoolExecutor {
 		return true;
 	}
 	
-	public DataBlock getDataBlock(int blockLen) {
-		int actualLen = blockLen+8;//加8是为了存xmin和xmax,用于mvcc
-		int num = actualLen / BYTES_SIZE;
-		num = num*BYTES_SIZE < actualLen ? num+1 : num;
+	public DataBlock doGetDataBlock(int blockLen) {
+		//需要的字节大小小于32字节,就直接new,不分配了
+		if (blockLen < BYTES_SIZE) {
+			byte[][] bytess = new byte[1][];
+			bytess[0] = new byte[blockLen];
+			return new DataBlock(bytess, blockLen, this, false);
+		}
+		
+		int num = blockLen / BYTES_SIZE;
+		num = num*BYTES_SIZE < blockLen ? num+1 : num;
 		
 		byte[][] bytess = new byte[num][];
 		int i = 0;
@@ -42,6 +48,11 @@ public class BlockPoolExecutor {
 			bytess[i] = new byte[BYTES_SIZE];
 		}
 		
-		return new DataBlock(bytess, actualLen, this);
+		return new DataBlock(bytess, blockLen, this, true);
+	}
+	
+	public DataBlock getDataBlock(int blockLen) {
+		//+8是为了存xmin和xmax.
+		return doGetDataBlock(blockLen+8);
 	}
 }

@@ -19,6 +19,8 @@ class LogFileManager {
 	
 	static private LogFileManager lfm = new LogFileManager();
 	
+	private static TransactionManager tm = TransactionManager.getInstance();
+	
 	private ArrayDeque<Integer> undoList = new ArrayDeque<Integer>();
 	
 	static LogFileManager getInstance() {
@@ -54,11 +56,14 @@ class LogFileManager {
 				logFile.writeInt(newItem.length);
 				newItem.writeToFile(logFile);
 			}
+			
+			//Unit大小这个量的大小这个不需要,因为不用倒着读.
 			//计算出Unit的大小,便于倒着读文件
+			/*
 			logFile.writeInt(4+2+4+ // transactionId+type+virtualAddress
 					4+(oldItem == null ? 0 : oldItem.length)+ // oldItem.length+oldItem
 					4+(newItem == null ? 0 : newItem.length)+ // newItem.length+newItem
-					4);//Unit大小这个量的大小
+					4);//*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -72,7 +77,7 @@ class LogFileManager {
 		DataBlock oldItem =  DataBlock.readFromFile(logFile, oldLen);
 		int newLen = logFile.readInt();		
 		DataBlock newItem =  DataBlock.readFromFile(logFile, newLen);
-		logFile.readInt();//把Unit的大小读了,在这里没用
+		//logFile.readInt();//把Unit的大小读了,在这里没用,不需要了,这一行
 		return new LogUnit(transactionId, type, virtualAddress, oldItem, newItem);
 	}
 	
@@ -84,12 +89,18 @@ class LogFileManager {
 					unit.type == TransactionType.active) {
 				redo(unit);
 			} else if (unit.type == TransactionType.start) {
-				undoTransactionId(unit.transactionId);
+				undoList.add(unit.transactionId);
 			} else {//unit.type == TransactionType.commit || TransactionType.abort
 				undoList.remove(unit.transactionId);
 			}
+			itemRelease(unit);
 		}
 		Revoke();
+	}
+	
+	private void itemRelease(LogUnit unit) {
+		unit.newItem.release();
+		unit.oldItem.release();
 	}
 	
 	private void redo(LogUnit unit) {
@@ -98,44 +109,9 @@ class LogFileManager {
 		mmu.modifyPage(unit.virtualAddress);
 	}
 	
-	void undoTransactionId(int transactionId) {
-		undoList.add(transactionId);
-	}
-	
 	void Revoke() throws IOException {
-		long offset = logFile.length();
-		long lenOffset;
-		while (offset != 0) {
-			lenOffset = offset-4;
-			logFile.seek(lenOffset);
-			offset -= logFile.readInt();
-			logFile.seek(offset);
-			undo(readLogUnit());
-		}
-		undoList.clear();
-	}
-	
-	private void undo(LogUnit unit) throws IOException {
-		if (undoList.contains(unit.transactionId)) {
-			if (unit.type == TransactionType.start) {
-				undoList.remove(unit.transactionId);
-				if (undoList.isEmpty()) {
-					return;
-				}
-			} else if (unit.type == TransactionType.active) {
-				int physicalAddress = 
-						mmu.changeVirtualAddressToPhysicalAddress(unit.virtualAddress);
-				cache.update(physicalAddress, unit.oldItem);
-				mmu.modifyPage(unit.virtualAddress);
-			}
-		}
-	}
-
-	public void clear() {
-		try {
-			logFile.setLength(0);
-		} catch (IOException e) {
-			e.printStackTrace();
+		for (Integer undoXid : undoList) {
+			tm.abort(undoXid);
 		}
 	}
 }

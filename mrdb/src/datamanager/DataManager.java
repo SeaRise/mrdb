@@ -46,18 +46,6 @@ public class DataManager {
 		}
 	}
 	
-	public void flush() {
-		final ReentrantLock lock = this.lock;
-        lock.lock();
-		try {
-			mmu.flush();
-		} finally {
-			lock.unlock();
-		}
-		
-		
-	}
-	
 	//物理地址只在DBCache中使用,对外提供虚拟地址.
 	public int insert(DataBlock dataItem, int transactionId) throws OutOfDiskSpaceException {
 		int virtualAddress = -1;
@@ -103,27 +91,30 @@ public class DataManager {
 		return dataItem;
 	}
 	
+	//日志里的所有操作都是redo,所以不需要前相.
 	public void update(int virtualAddress, DataBlock dataItem, int transactionId) {
-		int physicalAddress = -1;
-		DataBlock oldItem = null;
+		//int physicalAddress = -1;
+		//DataBlock oldItem = null;
 		final ReentrantLock lock = this.lock;
-		lock.lock();
+		//lock.lock();
+		/*
 		try {
 			physicalAddress = mmu.changeVirtualAddressToPhysicalAddress(virtualAddress);
 			oldItem = cache.read(physicalAddress);
 		} finally {
 			lock.unlock();
-		}
+		}*/
 		
 		lock.lock();
 		try {
-			lfm.login(transactionId, TransactionType.active, virtualAddress, oldItem, dataItem);
+			lfm.login(transactionId, TransactionType.active, virtualAddress, null, dataItem);
 		} finally {
 			lock.unlock();
 		}
 		
 		lock.lock();
 		try {
+			int physicalAddress = mmu.changeVirtualAddressToPhysicalAddress(virtualAddress);
 			cache.update(physicalAddress, dataItem);
 			mmu.modifyPage(virtualAddress);
 		} finally {
@@ -155,26 +146,7 @@ public class DataManager {
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
-			lfm.undoTransactionId(transactionId);
-		} finally {
-			lock.unlock();
-		}
-		
-		lock.lock();
-		try {
-			lfm.Revoke();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			lock.unlock();
-		}
-	}
-
-	public void clearLogFile() {
-		final ReentrantLock lock = this.lock;
-		lock.lock();
-		try {
-			lfm.clear();
+			lfm.login(transactionId, TransactionType.abort, -1, null, null);
 		} finally {
 			lock.unlock();
 		}

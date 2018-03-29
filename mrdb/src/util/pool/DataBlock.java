@@ -13,9 +13,12 @@ public class DataBlock {
 	
 	private final BlockPoolExecutor executor;
 	
+	private final boolean shouldRelease;
+	
 	public int length;
 	
-	DataBlock(byte[][] bytess, int len, BlockPoolExecutor executor) {
+	DataBlock(byte[][] bytess, int len, BlockPoolExecutor executor, boolean shouldRelease) {
+		this.shouldRelease = shouldRelease;
 		this.bytess = bytess;
 		this.executor = executor;
 		this.length = len;
@@ -204,7 +207,7 @@ public class DataBlock {
     }
     
 	
-    //先留着,暂时不谢
+    //先留着,暂时不写
     //一定会分写在多个数组
 	public void writeString(int pos, String value) {
     	
@@ -216,7 +219,9 @@ public class DataBlock {
 	
 	//调用该方法后不可再用此对象
 	public void release() {
-		for (int i = 0; i < bytess.length && executor.addBytes(bytess[i]); i++);
-		length = 0;
+		if (shouldRelease) {
+			for (int i = 0; i < bytess.length && executor.addBytes(bytess[i]); i++);
+			length = 0;
+		}
 	}
 }

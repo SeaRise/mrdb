@@ -31,7 +31,7 @@ public class TBMExecutor {
 	TBMExecutor() {
 	}
 	
-	void createTable(String tableName, Type keyType) throws TableNameRepeatException, TableCreateFailExceotion {
+	synchronized void createTable(String tableName, Type keyType) throws TableNameRepeatException, TableCreateFailExceotion {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
 			doCreateTable(tableName, file, keyType);
@@ -76,7 +76,7 @@ public class TBMExecutor {
 	}
 	
 	
-	void deleteTable(String tableName) {
+	synchronized void deleteTable(String tableName) {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		if (file.exists()) {
 			file.delete();
@@ -91,7 +91,7 @@ public class TBMExecutor {
 		vm.degradeLevel();
 	}
 	
-	void selectTable(String tableName) throws TableNotFoundException {
+	synchronized void selectTable(String tableName) throws TableNotFoundException {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
 			doSelectTable(file);

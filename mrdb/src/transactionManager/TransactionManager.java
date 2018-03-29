@@ -26,6 +26,7 @@ public class TransactionManager {
 		return new RandomAccessFile(tmFileName, "rw");
 	}
 	
+	//只有start+锁是因为其他的方法不会地址重复,只有start会
 	public synchronized int start() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		int xid = (int) tmFile.length()+1;
@@ -42,9 +43,15 @@ public class TransactionManager {
 		tmFile.write(XID.active.getByte());
 	}
 	
-	public synchronized void abort() throws IOException {
+	public void abort() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
+		tmFile.write(XID.aborted.getByte());
+	}
+	
+	public void abort(int xid) throws IOException {
+		RandomAccessFile tmFile = getAccessFile();
+		tmFile.seek(xid-1);
 		tmFile.write(XID.aborted.getByte());
 	}
 	
