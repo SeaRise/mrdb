@@ -88,18 +88,19 @@ class LogFileManager {
 			if (unit.transactionId == TransactionManager.SUPER_ID || 
 					unit.type == TransactionType.active) {
 				redo(unit);
+				itemRelease(unit);
 			} else if (unit.type == TransactionType.start) {
 				undoList.add(unit.transactionId);
 			} else {//unit.type == TransactionType.commit || TransactionType.abort
 				undoList.remove(unit.transactionId);
 			}
-			itemRelease(unit);
 		}
 		Revoke();
 	}
 	
 	private void itemRelease(LogUnit unit) {
 		unit.newItem.release();
+		//因为全部redo,所以不需要oldItem,所以都是null
 		//unit.oldItem.release();
 	}
 	

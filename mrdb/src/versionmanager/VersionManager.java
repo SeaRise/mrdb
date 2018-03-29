@@ -43,8 +43,12 @@ public class VersionManager {
 	
 	@SuppressWarnings("unchecked")
 	private synchronized void addXid(int xid) {
-		//快照
-		activeSnapShot.set((Set<Integer>) activeTran.clone());
+		//快照,在可重复读情况下
+		Integer lev = level.get();
+		if (lev != null && lev.equals(1)) {
+			activeSnapShot.set((Set<Integer>) activeTran.clone());
+		}
+		
 		activeTran.add(xid);
 	}
 	

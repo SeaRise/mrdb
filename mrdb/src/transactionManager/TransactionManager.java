@@ -29,7 +29,7 @@ public class TransactionManager {
 	//只有start+锁是因为其他的方法不会地址重复,只有start会
 	public synchronized int start() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
-		int xid = (int) tmFile.length()+1;
+		int xid = ((int)tmFile.length())+1;
 		transactionId.set(xid);
 		tmFile.seek(xid-1);
 		tmFile.write(XID.active.getByte());
@@ -41,24 +41,29 @@ public class TransactionManager {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
 		tmFile.write(XID.active.getByte());
+		tmFile.close();
 	}
 	
 	public void abort() throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(getXID()-1);
 		tmFile.write(XID.aborted.getByte());
+		tmFile.close();
 	}
 	
 	public void abort(int xid) throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(xid-1);
 		tmFile.write(XID.aborted.getByte());
+		tmFile.close();
 	}
 	
 	public XID getXidState(int xid) throws IOException {
 		RandomAccessFile tmFile = getAccessFile();
 		tmFile.seek(xid-1);
-		return XID.getXID(tmFile.readByte());
+		XID x = XID.getXID(tmFile.readByte());
+		tmFile.close();
+		return x;
 	}
 	
 	public int getXID() {
