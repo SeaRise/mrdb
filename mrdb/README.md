@@ -1,4 +1,6 @@
-这个多线程nosql数据库尚未完成,在SingleThreadSimpleDatabase2的基础上完善。
+这个多线程nosql数据库大致上完成,在SingleThreadSimpleDatabase2的基础上完善。
+但是还有bug,找不出bug在哪...
+
 - 改造im模块
     - 令im模块存储基于dm模块(完成)
     - 将b+树改造为b-link树，实现并发读写(完成)
