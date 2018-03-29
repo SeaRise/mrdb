@@ -19,7 +19,7 @@ class LogFileManager {
 	
 	static private LogFileManager lfm = new LogFileManager();
 	
-	private static TransactionManager tm = TransactionManager.getInstance();
+	private TransactionManager tm = TransactionManager.getInstance();
 	
 	private ArrayDeque<Integer> undoList = new ArrayDeque<Integer>();
 	
@@ -100,7 +100,7 @@ class LogFileManager {
 	
 	private void itemRelease(LogUnit unit) {
 		unit.newItem.release();
-		unit.oldItem.release();
+		//unit.oldItem.release();
 	}
 	
 	private void redo(LogUnit unit) {

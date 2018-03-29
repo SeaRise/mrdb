@@ -24,9 +24,9 @@ public class Test {
 		tbm.selectTable("fds");
 		tbm.start();
 		for (int i = 0; i < 5; i++) {
-			DataBlock db = BlockPoolExecutor.getInstance().getDataBlock(4);
+			DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
 			db.writeInt(0, i);
-			tbm.insert(i, db, false);
+			tbm.insert(i, db, true);
 			db.release();
 		}
 		tbm.commit();

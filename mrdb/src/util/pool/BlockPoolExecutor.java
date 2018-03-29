@@ -52,6 +52,11 @@ public class BlockPoolExecutor {
 	}
 	
 	public DataBlock getDataBlock(int blockLen) {
+		return doGetDataBlock(blockLen);
+	}
+	
+	//外部申请的时候用这个方法
+	public DataBlock getDataBlockMVCC(int blockLen) {
 		//+8是为了存xmin和xmax.
 		return doGetDataBlock(blockLen+8);
 	}

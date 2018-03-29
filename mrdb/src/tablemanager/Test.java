@@ -19,7 +19,7 @@ class Test {
 		tbm.createTable("fds", Type.int32);
 		tbm.selectTable("fds");
 		for (int i = 0; i < 5; i++) {
-			DataBlock db = BlockPoolExecutor.getInstance().getDataBlock(4);
+			DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
 			db.writeInt(0, i);
 			tbm.insert(i, db, false);
 			db.release();

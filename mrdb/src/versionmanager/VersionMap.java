@@ -13,7 +13,7 @@ class VersionMap {
 	
 	private static VersionMap vmap = new VersionMap();
 	
-	private static DataManager dm = DataManager.getInstance();
+	private DataManager dm = DataManager.getInstance();
 	
 	static VersionMap getInstance() {
 		return vmap;

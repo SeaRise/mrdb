@@ -1,6 +1,5 @@
 package versionmanager;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,7 +21,7 @@ class VersionList {
 	static final int PART_FIRST_VERSION_POS = 4;
 	static final int PART_LAST_POS = 4*4;
 	
-	final List<Integer> list = new LinkedList<Integer>();
+	final LinkedList<Integer> list = new LinkedList<Integer>();
 	
 	VersionList() {
 		
@@ -40,7 +39,7 @@ class VersionList {
 	
 	private int doInit(int firstVersion) throws OutOfDiskSpaceException {
 		DataBlock db = BlockPoolExecutor.getInstance().getDataBlock(PART_LEN);
-		list.add(firstVersion);
+		list.addFirst(firstVersion);
 		db.writeInt(0, 1);
 		db.writeInt(PART_FIRST_VERSION_POS, firstVersion);
 		db.writeInt(PART_LAST_POS, -1);
@@ -55,7 +54,7 @@ class VersionList {
 			DataBlock db = dm.read(address);
 			int n = db.getInt(0);
 			for (int i = 0; i < n; i++) {
-				list.add(db.getInt(PART_FIRST_VERSION_POS+i*4));
+				list.addFirst(db.getInt(PART_FIRST_VERSION_POS+i*4));
 			}
 			pos = db.getInt(PART_LAST_POS);
 			db.release();
@@ -76,7 +75,7 @@ class VersionList {
 		}
 		dm.update(lastAddress, db, TransactionManager.SUPER_ID);
 		db.release();
-		list.add(vesionAddr);
+		list.addFirst(vesionAddr);
 		lastAddress = lastAddr;
 	}
 }

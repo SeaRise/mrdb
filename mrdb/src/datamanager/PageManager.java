@@ -25,8 +25,11 @@ class PageManager {
 	
 	void init(DataManager dm) {
 		this.dm = dm;
+		DataBlock db = null;
 		for (int i = 0; i < DMSetting.PAGE_NUM; i++) {
-			lastOffsets[i] = dm.read(DMSetting.PM_FIRST_ADDRESS + i*8).getInt(0);
+			db = dm.read(DMSetting.PM_FIRST_ADDRESS + i*8);
+			lastOffsets[i] = db.getInt(0);
+			db.release();
 		}
 	}
 	
@@ -52,9 +55,10 @@ class PageManager {
 	
 	//更新尾偏移量
 	private void updatePageInf(int pageIndex) {
-		DataBlock dataItem = BlockPoolExecutor.getInstance().getDataBlock(4);
-		dataItem.writeInt(0, lastOffsets[pageIndex]);
-	    dm.update(DMSetting.PM_FIRST_ADDRESS + pageIndex*8, dataItem, TransactionManager.SUPER_ID);
+		DataBlock db = BlockPoolExecutor.getInstance().getDataBlock(4);
+		db.writeInt(0, lastOffsets[pageIndex]);
+	    dm.update(DMSetting.PM_FIRST_ADDRESS + pageIndex*8, db, TransactionManager.SUPER_ID);
+	    db.release();
 	}
 	
 	//计算剩余空间

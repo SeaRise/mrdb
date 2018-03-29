@@ -23,11 +23,11 @@ class Page {
 		int pos = offset+4;
 		int i = 0;
 		while (i < bytess.length-1) {
-			System.arraycopy(pageContent, pos, bytess[i], 0, BlockPoolExecutor.BYTES_SIZE);
+			System.arraycopy(pageContent, pos, bytess[i], 0, bytess[i].length);
 			i++;
-			pos += BlockPoolExecutor.BYTES_SIZE;
+			pos += bytess[i].length;
 		}
-		System.arraycopy(pageContent, pos, bytess[i], 0, len - i*BlockPoolExecutor.BYTES_SIZE);
+		System.arraycopy(pageContent, pos, bytess[i], 0, len - (pos-offset-4));
 		return block;
 	}
 	
@@ -40,11 +40,10 @@ class Page {
 		//前四位为dataItem.length
 		int destPos = offset+4;
 		int i = 0;
-		for (; i < dataItem.bytess.length-1; i++, destPos += BlockPoolExecutor.BYTES_SIZE) {
-			System.arraycopy(dataItem.bytess[i], 0, pageContent, destPos, BlockPoolExecutor.BYTES_SIZE);
+		for (; i < dataItem.bytess.length-1; i++, destPos += dataItem.bytess[i].length) {
+			System.arraycopy(dataItem.bytess[i], 0, pageContent, destPos, dataItem.bytess[i].length);
 		}
-		int len = dataItem.length - i*BlockPoolExecutor.BYTES_SIZE;
-		System.arraycopy(dataItem.bytess[i], 0, pageContent, destPos, len);
+		System.arraycopy(dataItem.bytess[i], 0, pageContent, destPos, dataItem.length - (destPos-offset-4));
 	}
 	
 	byte[] getContent() {
