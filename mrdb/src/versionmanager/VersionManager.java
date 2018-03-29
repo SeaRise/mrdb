@@ -72,11 +72,8 @@ public class VersionManager {
 		tm.commit();
 	}
 	
-	public DataBlock read(int virtualAddress) {
-		Version v = vmap.read(virtualAddress);
-		DataBlock db = dm.read(virtualAddress);
-		v.unlockS();
-		return db;
+	public DataBlock read(int virtualAddress) throws IOException {
+		return vmap.read(virtualAddress, tm.getXID());
 	}
 	
 	public int insert(DataBlock dataItem) throws OutOfDiskSpaceException {
@@ -86,7 +83,11 @@ public class VersionManager {
 		return vmap.insert(dm.insert(e.db, xid));
 	}
 	
-	public void update(int virtualAddress, DataBlock dataItem) {
-		dm.update(virtualAddress, dataItem, tm.getXID());
+	public void update(int virtualAddress, DataBlock dataItem) throws IOException, OutOfDiskSpaceException {
+		vmap.update(virtualAddress, tm.getXID(), dataItem);
+	}
+	
+	public void delete(int virtualAddress) throws IOException {
+		vmap.delete(virtualAddress, tm.getXID());
 	}
 }

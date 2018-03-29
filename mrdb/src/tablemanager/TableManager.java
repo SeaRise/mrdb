@@ -48,11 +48,11 @@ public class TableManager {
 		exec.insert(key, value, isTransaction);
 	}
 	
-	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
+	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException, OutOfDiskSpaceException {
 		exec.update(key, newValue, isTransaction);
 	}
 	
-	public DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {
+	public DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException, IOException {
 		return exec.read(key);
 	}
 	

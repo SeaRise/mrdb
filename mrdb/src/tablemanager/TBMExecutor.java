@@ -151,7 +151,7 @@ public class TBMExecutor {
     	}
 	}
 	
-	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
+	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException, OutOfDiskSpaceException {
 		check(key);
 		if (!isTransaction) {
     		vm.startTransaction();
@@ -163,7 +163,7 @@ public class TBMExecutor {
     	}
 	}
 	
-	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException {
+	DataBlock read(Object key) throws NotSelectTableException, ObjectMismatchException, IOException {
 		check(key);
 		int address = im.search(key, keyType.get(), keyAddress.get());
 		return vm.read(address);
