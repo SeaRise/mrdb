@@ -57,18 +57,22 @@ class Tree {
         			p.release();
         			lt.unlockS(p.pos);
         			lt.lockX(p.pos);
+        			//此时p加写锁
         			p = Node.getNode(p.pos, type);
         		}
+        		//search加读锁,insert加写锁
 				return p;
 			}
         	
-        	int rightPos = p.getRightPos();
-        	if (rightPos != -1 && IndexUtil.compareTo(key, p.getRightFirstKey(), type) >= 0) {
+        	//p不是叶子节点.由条件可知,只有最右边的节点可能调用这个方法.
+        	updateMinKey(p, onlyRead, key);
+        	
+        	int rightPos;
+        	while ((rightPos = p.getRightPos()) != -1 && IndexUtil.compareTo(key, p.getRightFirstKey(), type) >= 0) {
         		p.release();
 				lt.lockS(rightPos);
 				lt.unlockS(p.pos);
 				p = p.getRight(rightPos);
-				continue;
 			}
         	
         	int n = p.getN();
@@ -84,6 +88,31 @@ class Tree {
 		}
 	}
 	
+	//此时加着读锁
+	//双重检查
+	//返回时node加读锁
+	private void updateMinKey(Node node, boolean onlyRead, Object key) {
+		if (onlyRead) {
+			return;
+		}
+		
+		if (IndexUtil.compareTo(key, node.getKey(0), type) < 0 ) {
+			lt.unlockS(node.pos);
+			lt.lockX(node.pos);
+			node.release();
+			node = Node.getNode(node.pos, type);
+			if (IndexUtil.compareTo(key, node.getKey(0), type) < 0) {
+				node.setKey(0, key);
+			    node.writeBackToDM();
+			}
+			//锁降级不会报错
+			lt.lockS(node.pos);
+			lt.unlockX(node.pos);
+		}
+	}
+	
+	
+	
 	int ssearch(Object key) {
 		Node node = findLeafNode(key, true);
 		if (node.getN() == 0 || IndexUtil.compareTo(key, node.getKey(0), type) < 0) {
@@ -96,8 +125,8 @@ class Tree {
 			int rightPos = node.getRightPos();
 			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
 				node.release();
-				lt.unlockS(node.pos);
 				lt.lockS(rightPos);
+				lt.unlockS(node.pos);
 				node = node.getRight(rightPos);
 				continue;
 			}
@@ -122,16 +151,12 @@ class Tree {
 		//此时node加写锁
 		Node node = findLeafNode(key, false);
 		
-		while (true) {
-			int rightPos = node.getRightPos();
-			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
-				node.release();
-				lt.lockX(rightPos);
-				lt.unlockX(node.pos);
-				node = node.getRight(rightPos);
-			} else {
-				break;
-			}
+		int rightPos;
+		while ((rightPos = node.getRightPos()) != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) > 0) {
+			node.release();
+			lt.lockX(rightPos);
+			lt.unlockX(node.pos);
+			node = node.getRight(rightPos);
 		}
 		
 		//此时node加写锁
@@ -148,26 +173,28 @@ class Tree {
 	//此时node加写锁
 	private void split(Node node, Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
 		Node parent = null;
-		final Object kkey = key;
+		//final Object kkey = key;
 		while (node.isFull()) {
 			Node newNode = null;
 			if (node.isRoot()) {
-				//此时parent加锁,node加锁
-				parent = createNewRootNode(node, kkey);
+				//node加着写锁,parent加写锁,且parent已经写入dm中了.
+				parent = createNewRootNode(node);
 				node.setParentPos(parent.pos);
+				//这一行在dm中更新了node和newNode,所以在dm中,此时node的父节点是parent.newNode的父节点也是parent
 				newNode = createNewNode(node, key, value);
-				updateRootAddress(parent.pos);
+				//这是再更新根节点位置.
+			    updateRootAddress(parent.pos);
 				key = newNode.getKey(0);
 				value = newNode.pos;
 				newNode.release();
 			} else {
-				//node加着写锁
+				//node加写锁
 				newNode = createNewNode(node, key, value);
 				key = newNode.getKey(0);
 				value = newNode.pos;
 				newNode.release();
 				//此时parent加写锁
-				parent = getParentNode(node, key, kkey);
+				parent = getParentNode(node, key);
 			}
 			
 			node.release();
@@ -176,30 +203,17 @@ class Tree {
 		}
 		node.add(key, value);
 		node.writeBackToDM();
-		/*
-		while (!node.isRoot()) {
-			//parent = getParentNode(node, key);
-			int parentPos = node.getParentPos();
-			lt.lockX(parentPos);
-			parent = Node.getNode(parentPos, type);
-			
-			Object pkey = parent.getKey(0);
-			parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
-			parent.writeBackToDM();
-			node.release();
-			lt.unlockX(node.pos);
-			node = parent;
-		}*/
 		
 		node.release();
 		lt.unlockX(node.pos);
 	}
 	
 	//创建新的根节点,同时加锁
-	private Node createNewRootNode(Node childNode, final Object kkey) throws OutOfDiskSpaceException, IndexDuplicateException {
+	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
 		Node newRoot = new Node(false, type);
 		Object ckey = childNode.getKey(0);
-		newRoot.add(IndexUtil.compareTo(kkey, ckey, type) < 0 ? kkey : ckey, childNode.pos);
+		//newRoot.add(IndexUtil.compareTo(kkey, ckey, type) < 0 ? kkey : ckey, childNode.pos);
+		newRoot.add(ckey, childNode.pos);
 		lt.lockX(newRoot.addToDM());
 		return newRoot;
 	}
@@ -242,17 +256,10 @@ class Tree {
 	}
 	
 	//对父节点加锁,可能要右移,包括右移
-	private Node getParentNode(Node node, Object key, Object kkey) {
+	private Node getParentNode(Node node, Object key) {
 		int parentPos = node.getParentPos();
 		lt.lockX(parentPos);
 		Node pnode = Node.getNode(parentPos, type);
-		
-		//更新parent的最小节点
-		//Object pkey = pnode.getKey(0);
-		//if (IndexUtil.compareTo(kkey, pkey, type) < 0 ) {
-		//	pnode.setKey(0, kkey);
-		//	pnode.writeBackToDM();
-		//}
 		
 		int rightPos;
 		while ((rightPos = pnode.getRightPos()) != -1 && IndexUtil.compareTo(key, pnode.getRightFirstKey(), type) >= 0) {
