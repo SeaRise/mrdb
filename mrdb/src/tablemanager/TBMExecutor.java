@@ -36,17 +36,21 @@ public class TBMExecutor {
 	TBMExecutor() {
 	}
 	
-	synchronized void createTable(String tableName, Type keyType) throws TableNameRepeatException, TableCreateFailExceotion {
+	synchronized void createTable(String tableName, Type keyType) {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
 			doCreateTable(tableName, file, keyType);
-		} catch (IOException | OutOfDiskSpaceException e) {
+		} catch (IOException e) {
 			file.delete();
-			throw new TableCreateFailExceotion();
+			try {
+				throw new TableCreateFailExceotion();
+			} catch (TableCreateFailExceotion e1) {
+				LOGGER.log(Level.INFO, "create table fail, table name:" + tableName);
+			}
 		}
 	}
 	
-	private void doCreateTable(String tableName, File file, Type keyType) throws IOException, TableNameRepeatException, OutOfDiskSpaceException {	
+	private void doCreateTable(String tableName, File file, Type keyType) throws IOException {	
 		if (file.exists()) {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
 			try {
@@ -56,7 +60,11 @@ public class TBMExecutor {
 				boolean flag = dis.readUTF().equals(TMB_END);
 				dis.close();
 				if (flag) {
-					throw new TableNameRepeatException();
+					try {
+						throw new TableNameRepeatException();
+					} catch (TableNameRepeatException e) {
+						LOGGER.log(Level.INFO, "table name has repeat, table name:" + tableName);
+					}
 				}
 				file.delete();
 			} finally {
@@ -76,7 +84,7 @@ public class TBMExecutor {
 		}
 	}
 	
-	private int initKey(Type keyType) throws OutOfDiskSpaceException {
+	private int initKey(Type keyType) {
 		return im.addRootNode(keyType);
 	}
 	
@@ -96,7 +104,7 @@ public class TBMExecutor {
 		vm.degradeLevel();
 	}
 	
-	synchronized void selectTable(String tableName) throws TableNotFoundException {
+	synchronized void selectTable(String tableName) {
 		File file = new File(ParentPath.tablesFileParentName + tableName + ".t");
 		try {
 			doSelectTable(file);
@@ -105,7 +113,13 @@ public class TBMExecutor {
 			this.keyType.set(null);
 			this.keyAddress.set(null);
 			file.delete();
-			throw new TableNotFoundException();
+			try {
+				throw new TableNotFoundException();
+			} catch (TableNotFoundException e1) {
+				LOGGER.log(Level.INFO, "select table fail, tableName:" + tableName);
+			}
+		} catch (TableNotFoundException e) {
+			LOGGER.log(Level.INFO, "select table fail, tableName:" + tableName);
 		}
 	}
 	
@@ -132,32 +146,32 @@ public class TBMExecutor {
 		throw new TableNotFoundException();
 	}
 	
-	void start() throws IOException {
+	void start() {
 		vm.startTransaction();
 	}
 	
-	void commit() throws IOException {
+	void commit() {
 		vm.commitTransaction();
 	}
 	
-	void abort() throws IOException {
+	void abort() {
 		vm.abortTransaction();
 	}
 	
-    void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException, IOException {
+    void insert(Object key, DataBlock value, boolean isTransaction) {
     	check(key);
     	if (!isTransaction) {
     		start();
     	}
     	int valueAddress = vm.insert(value);
-    	LOGGER.log(Level.INFO, "insert," + "address " + valueAddress + " key " + key + " thread " + Thread.currentThread().getId());
+    	//LOGGER.log(Level.INFO, "insert," + "address " + valueAddress + " key " + key + " thread " + Thread.currentThread().getId());
     	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
     	if (!isTransaction) {
     		commit();
     	}
 	}
 	
-	void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException, OutOfDiskSpaceException {
+	void update(Object key, DataBlock newValue, boolean isTransaction) {
 		check(key);
 		if (!isTransaction) {
 			start();
@@ -169,13 +183,13 @@ public class TBMExecutor {
     	}
 	}
 	
-	DataBlock read(Object key, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
+	DataBlock read(Object key, boolean isTransaction) {
 		check(key);
 		if (!isTransaction) {
 			start();
     	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
-		LOGGER.log(Level.INFO, "read," + "address " + address + " key " + key + " thread " + Thread.currentThread().getId());
+		//LOGGER.log(Level.INFO, "read," + "address " + address + " key " + key + " thread " + Thread.currentThread().getId());
 		DataBlock db = vm.read(address);
 		if (!isTransaction) {
 			commit();
@@ -183,7 +197,7 @@ public class TBMExecutor {
 		return db;
 	}
 	
-	void delete(Object key, boolean isTransaction) throws IOException, NotSelectTableException, ObjectMismatchException {
+	void delete(Object key, boolean isTransaction) {
 		check(key);
 		if (!isTransaction) {
 			start();
@@ -195,25 +209,35 @@ public class TBMExecutor {
     	}
 	}
 	
-	private void check(Object key) throws NotSelectTableException, ObjectMismatchException {
+	private void check(Object key) {
 		if (tableName == null) {
-			throw new NotSelectTableException();
+			try {
+				throw new NotSelectTableException();
+			} catch (NotSelectTableException e) {
+				LOGGER.log(Level.INFO, "未选择表");
+			}
 		}
 		Type type = keyType.get();
-		if (type == Type.int32) {
-			if (!(key instanceof Integer)) {
+		try {
+			if (type == Type.int32) {
+				if (!(key instanceof Integer)) {
+					throw new ObjectMismatchException();
+				}
+			} else if (type == Type.long64) {
+				if (!(key instanceof Long)) {
+					throw new ObjectMismatchException();
+				}
+			} else if (type == Type.string64) {
+				if (!(key instanceof String)) {
+					throw new ObjectMismatchException();
+				}
+			} else {
 				throw new ObjectMismatchException();
 			}
-		} else if (type == Type.long64) {
-			if (!(key instanceof Long)) {
-				throw new ObjectMismatchException();
-			}
-		} else if (type == Type.string64) {
-			if (!(key instanceof String)) {
-				throw new ObjectMismatchException();
-			}
-		} else {
-			throw new ObjectMismatchException();
+		} catch (ObjectMismatchException e) {
+			LOGGER.log(Level.INFO, "key mismatch your key:" + 
+		    key.getClass().getSimpleName() + "key of table:" + type);
 		}
+		
 	}
 }

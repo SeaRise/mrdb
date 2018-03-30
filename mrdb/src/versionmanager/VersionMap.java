@@ -1,9 +1,7 @@
 package versionmanager;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +17,7 @@ class VersionMap {
 	private DataManager dm = DataManager.getInstance();
 	
 	// Logger
-	//private final static Logger LOGGER = Logger.getLogger(VersionMap.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(VersionMap.class.getName());
 	
 	static VersionMap getInstance() {
 		return vmap;
@@ -29,9 +27,14 @@ class VersionMap {
 	
 	private VersionMap() {}
 	
-	synchronized int insert(int firstVersion) throws OutOfDiskSpaceException {
+	synchronized int insert(int firstVersion) {
 		VersionList list = new VersionList();
-		int address = list.init(firstVersion);
+		int address = -1;
+		try {
+			address = list.init(firstVersion);
+		} catch (OutOfDiskSpaceException e) {
+			LOGGER.log(Level.INFO, "插入数据失败,dm空间不足, address:" + address);
+		}
 		//LOGGER.log(Level.INFO, "插入数据," + "vl len" + list.list.size() + " address " + address);
 		map.put(list.address, list);
 		return address;
@@ -46,7 +49,7 @@ class VersionMap {
 		}
 	}
 	
-	DataBlock read(int address, int xid) throws IOException {
+	DataBlock read(int address, int xid) {
 		VersionList vl;
 		synchronized (this) {
 			loadVersionList(address);
@@ -66,7 +69,7 @@ class VersionMap {
 		}
 	}
 	
-	void delete(int address, int xid) throws IOException {
+	void delete(int address, int xid) {
 		VersionList vl;
 		synchronized (this) {
 			loadVersionList(address);
@@ -91,7 +94,7 @@ class VersionMap {
 		}
 	}
 	
-	void update(int address, int xid, DataBlock db) throws IOException, OutOfDiskSpaceException {
+	void update(int address, int xid, DataBlock db) {
 		VersionList vl;
 		synchronized (this) {
 			loadVersionList(address);
@@ -116,7 +119,11 @@ class VersionMap {
 				e = new Entry(db, false);
 				e.setXmin(xid);
 				//这时的e.db用户还持有,由用户来释放.
-				vl.addVersion(dm.insert(e.db, xid));
+				try {
+					vl.addVersion(dm.insert(e.db, xid));
+				} catch (OutOfDiskSpaceException e1) {
+					LOGGER.log(Level.INFO, "写入一个新版本,dm空间 不足" + " address " + address);
+				}
 			}
 		}
 	}

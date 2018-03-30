@@ -1,5 +1,8 @@
 package indexmanager;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import indexmanager.current.LockTable;
 import tablemanager.Type;
 import transactionManager.TransactionManager;
@@ -20,6 +23,9 @@ class Tree {
 	static LockTable lt = LockTable.getInstance();
 	
 	final static int BN = 3; 
+	
+	// Logger
+	private final static Logger LOGGER = Logger.getLogger(Tree.class.getName());
 	
 	/*根节点地址
 	 * */
@@ -147,7 +153,7 @@ class Tree {
 		}
 	}
 	
-	void iinsert(Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
+	void iinsert(Object key, int value) {
 		//此时node加写锁
 		Node node = findLeafNode(key, false);
 		
@@ -171,7 +177,7 @@ class Tree {
 	}
 	
 	//此时node加写锁
-	private void split(Node node, Object key, int value) throws IndexDuplicateException, OutOfDiskSpaceException {
+	private void split(Node node, Object key, int value) {
 		Node parent = null;
 		//final Object kkey = key;
 		while (node.isFull()) {
@@ -209,12 +215,16 @@ class Tree {
 	}
 	
 	//创建新的根节点,同时加锁
-	private Node createNewRootNode(Node childNode) throws OutOfDiskSpaceException, IndexDuplicateException {
+	private Node createNewRootNode(Node childNode) {
 		Node newRoot = new Node(false, type);
 		Object ckey = childNode.getKey(0);
 		//newRoot.add(IndexUtil.compareTo(kkey, ckey, type) < 0 ? kkey : ckey, childNode.pos);
 		newRoot.add(ckey, childNode.pos);
-		lt.lockX(newRoot.addToDM());
+		try {
+			lt.lockX(newRoot.addToDM());
+		} catch (OutOfDiskSpaceException e) {
+			LOGGER.log(Level.INFO, "生成新根节点,dm空间不足");
+		}
 		return newRoot;
 	}
 	
@@ -226,7 +236,7 @@ class Tree {
 	}
 	
 	//把node分裂,同时把key,value插入,此时node加锁
-	private Node createNewNode(Node node, Object key, int value) throws OutOfDiskSpaceException, IndexDuplicateException {
+	private Node createNewNode(Node node, Object key, int value) {
 		int n = node.getN();
 		int mid = n/2;
 		
@@ -249,7 +259,12 @@ class Tree {
 			left.add(key, value);
 		}
 		
-		int rightPos = right.addToDM();
+		int rightPos = -1;
+		try {
+			rightPos = right.addToDM();
+		} catch (OutOfDiskSpaceException e) {
+			LOGGER.log(Level.INFO, "分裂新节点,dm空间不足");
+		}
 		left.setRight(rightPos, right.getKey(0));
 		left.writeBackToDM();
 		

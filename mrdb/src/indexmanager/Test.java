@@ -49,16 +49,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 0; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c1");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c1");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 0; i < 1000; i+=7) {
@@ -78,16 +70,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 1; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c2");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c2");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 1; i < 1000; i+=7) {
@@ -106,16 +90,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 2; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c3");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c3");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 2; i < 1000; i+=7) {
@@ -134,16 +110,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 3; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c4");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c4");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			
@@ -163,16 +131,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 4; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c5");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c5");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 4; i < 1000; i+=7) {
@@ -191,16 +151,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 5; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c6");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c6");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 5; i < 1000; i+=7) {
@@ -219,16 +171,8 @@ class Test <E extends Comparable<E>> {
 		@Override
 		public void run() {
 			for (int i = 6; i < 1000; i+=7) {
-				try {
-					System.out.println(i + " c7");
-					im.insert(i, i, rootAddress, Type.int32);
-					//System.out.println(im.toString());
-				} catch (OutOfDiskSpaceException | IndexDuplicateException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//int ls = im.search(i, Type.int32, rootAddress);
-				//System.out.print(ls + "\n");
+				System.out.println(i + " c7");
+				im.insert(i, i, rootAddress, Type.int32);
 				//System.out.println(im.toString());
 			}
 			for (int i = 6; i < 1000; i+=7) {

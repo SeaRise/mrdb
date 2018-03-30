@@ -1,5 +1,8 @@
 package indexmanager;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import tablemanager.Type;
 import transactionManager.TransactionManager;
 import util.pool.BlockPoolExecutor;
@@ -13,6 +16,9 @@ import datamanager.OutOfDiskSpaceException;
  * 增加右兄弟节点
  * */
 class Node {
+	
+	// Logger
+	private final static Logger LOGGER = Logger.getLogger(Node.class.getName());
 	
 	static final int LEAF_OFFSET = 0;
 	static final int PARENT_POS_OFFSET = 1;
@@ -168,11 +174,11 @@ class Node {
 		return getN() == 2*Tree.BN;
 	}
 	
-	void add(Node node) throws IndexDuplicateException {
+	void add(Node node) {
 		add(node.getKey(0), node.pos);
 	}
 	
-	void add(final Object key, final int value) throws IndexDuplicateException {
+	void add(final Object key, final int value) {
 		int n = getN();
 		int i = n;
 		Type type = getType();
@@ -183,7 +189,11 @@ class Node {
 		
 		//索引重复不被允许
 		if (isLeaf() && i != 0 && IndexUtil.compareTo(key, getKey(i-1), type) == 0) {
-			throw new IndexDuplicateException();
+			try {
+				throw new IndexDuplicateException();
+			} catch (IndexDuplicateException e) {
+				LOGGER.log(Level.INFO, "key重复,重复key为:" + key);
+			}
 		}
 		setKey(i, key);
 		setValue(i, value);

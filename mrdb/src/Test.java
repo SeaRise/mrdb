@@ -48,49 +48,29 @@ public class Test {
 	static class c1 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 0; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c1 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 0; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c1 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 0; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c1 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 0; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c1 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit();
 		}
 		
 	}
@@ -98,294 +78,174 @@ public class Test {
 	static class c2 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 1; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c2 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 1; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c2 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 1; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c2 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 1; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c2 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit();
 		}
 	}
 	
 	static class c3 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 2; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 2; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 2; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 2; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit(); 
 		}
 	}
 	
 	static class c4 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 3; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 3; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c4 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 3; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 3; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c4 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit(); 
 		}
 	}
 	
 	static class c5 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 4; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 4; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c5 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 4; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 4; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c5 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit(); 
 		}
 	}
 	
 	static class c6 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 5; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 5; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c5 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 5; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 5; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c5 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit(); 
 		}
 	}
 	
 	static class c7 implements Runnable {
 		@Override
 		public void run() {
-			try {
-				tbm.selectTable("fdss");
-				tbm.start();
-				for (int i = 6; i < 500; i+=7) {
-					DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
-					db.writeInt(0, i);
-					tbm.insert(i, db, true);
-					db.release();
-					/*
-					db = tbm.read(i, true);
-					System.out.print("c3 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();*/
-				}
-				tbm.commit();
-				
-				tbm.start();
-				for (int i = 6; i < 500; i+=7) {
-					DataBlock db = tbm.read(i, true);
-					System.out.print("c5 " + i + " ");
-					System.out.println(db.getInt(0));
-					db.release();
-				}
-				tbm.commit();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TableNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NotSelectTableException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ObjectMismatchException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OutOfDiskSpaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IndexDuplicateException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			tbm.selectTable("fdss");
+			tbm.start();
+			for (int i = 6; i < 500; i+=7) {
+				DataBlock db = BlockPoolExecutor.getInstance().getDataBlockMVCC(4);
+				db.writeInt(0, i);
+				tbm.insert(i, db, true);
+				db.release();
+				/*
+				db = tbm.read(i, true);
+				System.out.print("c3 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();*/
 			}
+			tbm.commit();
+			
+			tbm.start();
+			for (int i = 6; i < 500; i+=7) {
+				DataBlock db = tbm.read(i, true);
+				System.out.print("c5 " + i + " ");
+				System.out.println(db.getInt(0));
+				db.release();
+			}
+			tbm.commit(); 
 		}
 	}
 }

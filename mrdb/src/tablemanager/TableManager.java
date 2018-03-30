@@ -1,14 +1,7 @@
 package tablemanager;
 
-import indexmanager.IndexDuplicateException;
-
-import java.io.IOException;
-import java.util.logging.Logger;
-
-import transactionManager.TransactionManager;
 import util.ParentPath;
 import util.pool.DataBlock;
-import datamanager.OutOfDiskSpaceException;
 
 
 public class TableManager {
@@ -26,7 +19,7 @@ public class TableManager {
 		exec = new TBMExecutor();
 	}
 	
-	public void createTable(String tableName, Type keyType) throws TableNameRepeatException, IOException, OutOfDiskSpaceException, TableCreateFailExceotion {
+	public void createTable(String tableName, Type keyType) {
 		exec.createTable(tableName, keyType);
 	}
 	
@@ -42,35 +35,35 @@ public class TableManager {
 		exec.degradeLevel();
 	}
 	
-	public void selectTable(String tableName) throws IOException, TableNotFoundException {
+	public void selectTable(String tableName) {
 		exec.selectTable(tableName);
 	}
 	
-	public void insert(Object key, DataBlock value, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, OutOfDiskSpaceException, IndexDuplicateException, IOException {
+	public void insert(Object key, DataBlock value, boolean isTransaction) {
 		exec.insert(key, value, isTransaction);
 	}
 	
-	public void update(Object key, DataBlock newValue, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException, OutOfDiskSpaceException {
+	public void update(Object key, DataBlock newValue, boolean isTransaction) {
 		exec.update(key, newValue, isTransaction);
 	}
 	
-	public DataBlock read(Object key, boolean isTransaction) throws NotSelectTableException, ObjectMismatchException, IOException {
+	public DataBlock read(Object key, boolean isTransaction) {
 		return exec.read(key, isTransaction);
 	}
 	
-	public void delete(Object key, boolean isTransaction) throws IOException, NotSelectTableException, ObjectMismatchException {
+	public void delete(Object key, boolean isTransaction) {
 		exec.delete(key, isTransaction);
 	}
 	
-	public void start() throws IOException {
+	public void start() {
 		exec.start();
 	}
 	
-	public void commit() throws IOException {
+	public void commit() {
 		exec.commit();
 	}
 	
-	public void abort() throws IOException {
+	public void abort() {
 		exec.abort();
 	}
 }

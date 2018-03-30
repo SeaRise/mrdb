@@ -30,44 +30,68 @@ public class TransactionManager {
 		return tm;
 	}
 	
-	private RandomAccessFile getAccessFile() throws FileNotFoundException {
+	private RandomAccessFile getAccessFile() {
 		if (tmFile.get() == null) {
-			tmFile.set(new RandomAccessFile(tmFileName, "rw"));
+			try {
+				tmFile.set(new RandomAccessFile(tmFileName, "rw"));
+			} catch (FileNotFoundException e) {
+				LOGGER.log(Level.INFO, "事务管理文件读取失败:" + tmFileName);
+			}
 		}
 		return tmFile.get();
 	}
 	
 	//只有start+锁是因为其他的方法不会地址重复,只有start会
-	public synchronized int start() throws IOException {
+	public synchronized int start() {
 		RandomAccessFile tmFile = getAccessFile();
-		int xid = ((int)tmFile.length())+1;
-		transactionId.set(xid);
-		tmFile.seek(xid-1);
-		tmFile.write(XID.active.getByte());
+		int xid = -1;
+		try {
+			xid = ((int)tmFile.length())+1;
+			transactionId.set(xid);
+			tmFile.seek(xid-1);
+			tmFile.write(XID.active.getByte());
+		} catch (IOException e) {
+			LOGGER.log(Level.INFO, "start一个新事务失败,xid = " + xid);
+		}
 		
-		LOGGER.log(Level.INFO, "开始一个事务,xid = " + xid);
+		LOGGER.log(Level.INFO, "start开始一个事务,xid = " + xid);
 		
 		return xid;
 	}
 	
-	public void commit() throws IOException {		
+	public void commit() {		
 		RandomAccessFile tmFile = getAccessFile();
-		tmFile.seek(getXID()-1);
-		tmFile.write(XID.commit.getByte());
-		LOGGER.log(Level.INFO, "结束一个事务,xid = " + getXID());
+		int xid = -1;
+		try {
+			tmFile.seek((xid = getXID())-1);
+			tmFile.write(XID.commit.getByte());
+		} catch (IOException e) {
+			LOGGER.log(Level.INFO, "commit一个事务失败,xid = " + xid);
+		}
+		LOGGER.log(Level.INFO, "commit提交一个事务,xid = " + getXID());
 	}
 	
-	public void abort() throws IOException {
+	public void abort() {
 		RandomAccessFile tmFile = getAccessFile();
-		tmFile.seek(getXID()-1);
-		tmFile.write(XID.aborted.getByte());
-		LOGGER.log(Level.INFO, "结束一个事务,xid = " + getXID());
+		int xid = -1;
+		try {
+			tmFile.seek((xid = getXID())-1);
+			tmFile.write(XID.aborted.getByte());
+		} catch (IOException e) {
+			LOGGER.log(Level.INFO, "abort一个事务失败,xid = " + xid);
+		}
+		LOGGER.log(Level.INFO, "abort回滚一个事务,xid = " + xid);
 	}
 	
-	public void abort(int xid) throws IOException {
+	public void abort(int xid) {
 		RandomAccessFile tmFile = getAccessFile();
-		tmFile.seek(xid-1);
-		tmFile.write(XID.aborted.getByte());
+		try {
+			tmFile.seek(xid-1);
+			tmFile.write(XID.aborted.getByte());
+		} catch (IOException e) {
+			LOGGER.log(Level.INFO, "abort一个事务失败,xid = " + xid);
+		}
+		LOGGER.log(Level.INFO, "abort回滚一个事务,xid = " + xid);
 	}
 	
 	public XID getXidState(int xid) {

@@ -15,7 +15,7 @@ class Test {
 	 */
 	static TableManager tbm = TableManager.getInstance();
 	
-	public static void main(String[] args) throws TableNameRepeatException, IOException, OutOfDiskSpaceException, TableCreateFailExceotion, TableNotFoundException, NotSelectTableException, ObjectMismatchException, IndexDuplicateException {
+	public static void main(String[] args) throws TableNameRepeatException, IOException, OutOfDiskSpaceException, TableCreateFailExceotion, TableNotFoundException, NotSelectTableException, ObjectMismatchException, IndexDuplicateException  {
 		tbm.createTable("fds", Type.int32);
 		tbm.selectTable("fds");
 		tbm.start();

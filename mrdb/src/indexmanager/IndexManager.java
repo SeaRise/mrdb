@@ -1,5 +1,8 @@
 package indexmanager;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import tablemanager.Type;
 import transactionManager.TransactionManager;
 import util.pool.BlockPoolExecutor;
@@ -12,6 +15,9 @@ public class IndexManager {
 	//private Tree tree = null;
 	private ThreadLocal<Tree> tree = new ThreadLocal<Tree>();
 	
+	// Logger
+	private final static Logger LOGGER = Logger.getLogger(IndexManager.class.getName());
+	
 	public IndexManager() {
 		
 	}
@@ -22,7 +28,7 @@ public class IndexManager {
 		}
 	}
 	
-	public void insert(Object key, int address, int rootAddress, Type type) throws OutOfDiskSpaceException, IndexDuplicateException {
+	public void insert(Object key, int address, int rootAddress, Type type) {
 		selectTree(rootAddress, type);
 		tree.get().iinsert(key, address);
 	}
@@ -33,11 +39,19 @@ public class IndexManager {
 		
 	}
 
-	public int addRootNode(Type type) throws OutOfDiskSpaceException {
-		int address = new Node(true, type).addToDM();
-		DataBlock block = BlockPoolExecutor.getInstance().getDataBlock(4);
-		block.writeInt(0, address);
-		return DataManager.getInstance().insert(block, TransactionManager.SUPER_ID);
+	public int addRootNode(Type type) {
+		int address = -1;
+		int rootAddress = -1;
+		try {
+			address = new Node(true, type).addToDM();
+			DataBlock block = BlockPoolExecutor.getInstance().getDataBlock(4);
+			block.writeInt(0, address);
+			rootAddress = DataManager.getInstance().insert(block, TransactionManager.SUPER_ID);
+		} catch (OutOfDiskSpaceException e) {
+			LOGGER.log(Level.INFO, "建立索引失败,空间不足");
+		}
+		
+		return rootAddress;
 	}
 
 	@Override

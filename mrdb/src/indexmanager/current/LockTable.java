@@ -1,11 +1,7 @@
 package indexmanager.current;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.Set;
 
 public class LockTable {
 	
@@ -13,7 +9,7 @@ public class LockTable {
 	
 	private Map<Integer, IndexItem> lockMap = new HashMap<Integer, IndexItem>();
 	
-	private final ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
+	//private final ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
 	
 	public static LockTable getInstance() {
 		return lt;
@@ -22,8 +18,8 @@ public class LockTable {
 	private LockTable(long millis) {
 		//new Thread(new ListeningThread(millis)).start();
 	}
-	
-	//监听线程
+	/*
+	//监听线程,貌似会发生死锁,放弃了
 	private class ListeningThread implements Runnable {
 
 		final long millis;
@@ -55,7 +51,7 @@ public class LockTable {
 			}
 		}
 		
-	}
+	}*/
 	
 	synchronized private IndexItem findItem(int address) {
 		IndexItem it = lockMap.get(address);
@@ -66,26 +62,26 @@ public class LockTable {
 	}
 	
 	public void lockS(int address) {
-		rwlock.readLock().lock();
+		//rwlock.readLock().lock();
 		findItem(address).lockS();
-		rwlock.readLock().unlock();
+		//rwlock.readLock().unlock();
 	}
 	
 	public void lockX(int address) {
-		rwlock.readLock().lock();
+		//rwlock.readLock().lock();
 		findItem(address).lockX();
-		rwlock.readLock().unlock();
+		//rwlock.readLock().unlock();
 	}
 	
 	public void unlockS(int address) {
-		rwlock.readLock().lock();
+		//rwlock.readLock().lock();
 		findItem(address).unlockS();
-		rwlock.readLock().unlock();
+		//rwlock.readLock().unlock();
 	}
 	
 	public void unlockX(int address) {
-		rwlock.readLock().lock();
+		//rwlock.readLock().lock();
 		findItem(address).unlockX();
-		rwlock.readLock().unlock();
+		//rwlock.readLock().unlock();
 	}
 }

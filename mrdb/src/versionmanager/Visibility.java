@@ -1,6 +1,5 @@
 package versionmanager;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +20,7 @@ class Visibility {
 	// Logger
 	private final static Logger LOGGER = Logger.getLogger(Visibility.class.getName());
 	
-	static boolean IsVisible(int xid, Entry e) throws IOException {
+	static boolean IsVisible(int xid, Entry e) {
 		Integer lev = level.get();
 		if (lev == null || lev.equals(0)) {
 			
@@ -32,7 +31,7 @@ class Visibility {
 	}
 	
 	//读已提交
-	static boolean readCommitted(int xid, Entry e) throws IOException {
+	static boolean readCommitted(int xid, Entry e) {
 		int xmin = e.xmin;
 		int xmax = e.xmax;
 		
@@ -63,11 +62,9 @@ class Visibility {
 	}
 	
 	//可重复读
-	static boolean repeatableRead(int xid, Entry e) throws IOException {
+	static boolean repeatableRead(int xid, Entry e) {
 		int xmin = e.xmin;
 		int xmax = e.xmax;
-		
-		LOGGER.log(Level.INFO, "可重复读,可见性判断,xid = " + xid + " xmin = " + xmin + " xmax = " + xmax);
 		
 		//该版本由自己创建且未删除。
 		if (xmin == xid && xmax == 0) {
@@ -90,6 +87,8 @@ class Visibility {
 				}
 			}
 		}
+		
+		LOGGER.log(Level.INFO, "可重复读,可见性判断false,xid = " + xid + " xmin = " + xmin + " xmax = " + xmax);
 		return false;
 	}
 	

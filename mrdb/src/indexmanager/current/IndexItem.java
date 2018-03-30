@@ -1,7 +1,5 @@
 package indexmanager.current;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class IndexItem {
@@ -9,7 +7,7 @@ class IndexItem {
 	private final ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
 	
 	//当前项被加锁多少次
-	private AtomicInteger count = new AtomicInteger(0);
+	//private AtomicInteger count = new AtomicInteger(0);
 	
 	final int address;
 	
@@ -17,27 +15,28 @@ class IndexItem {
 		this.address = address;
 	}
 	
+	/*
 	boolean canClear() {
 		return count.compareAndSet(0, 0);
-	}
+	}*/
 	
 	void lockX() {
-		count.incrementAndGet();
+		//count.incrementAndGet();
 		rwlock.writeLock().lock();
 	}
 	
 	void lockS() {
-		count.incrementAndGet();
+		//count.incrementAndGet();
 		rwlock.readLock().lock();
 	}
 	
 	void unlockS() {
-		count.decrementAndGet();
+		//count.decrementAndGet();
 		rwlock.readLock().unlock();
 	}
 	
 	void unlockX() {
-		count.decrementAndGet();
+		//count.decrementAndGet();
 		rwlock.writeLock().unlock();
 	}
 	

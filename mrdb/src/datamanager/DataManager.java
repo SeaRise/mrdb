@@ -39,8 +39,6 @@ public class DataManager {
         lock.lock();
 		try {
 			lfm.rollback();
-		} catch (IOException e) {
-			e.printStackTrace();
 		} finally {
 			lock.unlock();
 		}
