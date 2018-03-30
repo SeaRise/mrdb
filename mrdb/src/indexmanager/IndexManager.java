@@ -47,7 +47,4 @@ public class IndexManager {
 		}
 		return tree.get().toString();
 	}
-	
-	
-	
 }

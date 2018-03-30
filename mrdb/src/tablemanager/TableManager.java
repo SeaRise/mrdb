@@ -3,7 +3,9 @@ package tablemanager;
 import indexmanager.IndexDuplicateException;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
+import transactionManager.TransactionManager;
 import util.ParentPath;
 import util.pool.DataBlock;
 import datamanager.OutOfDiskSpaceException;

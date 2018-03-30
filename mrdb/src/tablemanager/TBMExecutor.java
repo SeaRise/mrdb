@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import util.ParentPath;
 import util.pool.DataBlock;
@@ -27,6 +29,9 @@ public class TBMExecutor {
 	private ThreadLocal<String> tableName = new ThreadLocal<String>();
 	private ThreadLocal<Type> keyType = new ThreadLocal<Type>();
 	private ThreadLocal<Integer> keyAddress = new ThreadLocal<Integer>();
+	
+	// Logger
+	private final static Logger LOGGER = Logger.getLogger(TBMExecutor.class.getName());	
 	
 	TBMExecutor() {
 	}
@@ -145,6 +150,7 @@ public class TBMExecutor {
     		start();
     	}
     	int valueAddress = vm.insert(value);
+    	LOGGER.log(Level.INFO, "insert," + "address " + valueAddress + " key " + key + " thread " + Thread.currentThread().getId());
     	im.insert(key, valueAddress, keyAddress.get(), keyType.get());
     	if (!isTransaction) {
     		commit();
@@ -169,6 +175,7 @@ public class TBMExecutor {
 			start();
     	}
 		int address = im.search(key, keyType.get(), keyAddress.get());
+		LOGGER.log(Level.INFO, "read," + "address " + address + " key " + key + " thread " + Thread.currentThread().getId());
 		DataBlock db = vm.read(address);
 		if (!isTransaction) {
 			commit();

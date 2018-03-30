@@ -3,7 +3,10 @@ package versionmanager;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import tablemanager.TableManager;
 import transactionManager.TransactionManager;
 import util.Entry;
 import util.pool.DataBlock;
@@ -25,6 +28,9 @@ public class VersionManager {
 	private HashSet<Integer> activeTran = new HashSet<Integer>();
 	
 	ThreadLocal<Set<Integer>> activeSnapShot = new ThreadLocal<Set<Integer>>();
+	
+	//Logger
+	//private final static Logger LOGGER = Logger.getLogger(VersionManager.class.getName());
 	
 	static public VersionManager getInstance() {
 		return vm;
@@ -58,12 +64,14 @@ public class VersionManager {
 	
 	public void startTransaction() throws IOException {
 		int xid = tm.start();
+		//LOGGER.log(Level.INFO, "开始一个事务,xid = " + xid);
 		addXid(xid);
 		dm.start(xid);
 	}
 	
 	public void abortTransaction() throws IOException {
 		int xid = tm.getXID();
+		//LOGGER.log(Level.INFO, "结束一个事务,xid = " + xid);
 		removeXid(xid);
 		dm.abort(xid);
 		tm.abort();
@@ -71,18 +79,21 @@ public class VersionManager {
 	
 	public void commitTransaction() throws IOException {
 		int xid = tm.getXID();
+		//LOGGER.log(Level.INFO, "结束一个事务,xid = " + xid);
 		removeXid(xid);
 		dm.commit(xid);
 		tm.commit();
 	}
 	
 	public DataBlock read(int virtualAddress) throws IOException {
+		//LOGGER.log(Level.INFO, "读,xid = " + tm.getXID());
 		return vmap.read(virtualAddress, tm.getXID());
 	}
 	
 	public int insert(DataBlock dataItem) throws OutOfDiskSpaceException {
 		Entry e = new Entry(dataItem, false);
 		int xid = tm.getXID();
+		//LOGGER.log(Level.INFO, "插入,xid = " + xid);
 		e.setXmin(xid);
 		return vmap.insert(dm.insert(e.db, xid));
 	}

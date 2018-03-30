@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import util.Entry;
 import util.pool.DataBlock;
@@ -16,6 +18,9 @@ class VersionMap {
 	
 	private DataManager dm = DataManager.getInstance();
 	
+	// Logger
+	//private final static Logger LOGGER = Logger.getLogger(VersionMap.class.getName());
+	
 	static VersionMap getInstance() {
 		return vmap;
 	}
@@ -27,6 +32,7 @@ class VersionMap {
 	synchronized int insert(int firstVersion) throws OutOfDiskSpaceException {
 		VersionList list = new VersionList();
 		int address = list.init(firstVersion);
+		//LOGGER.log(Level.INFO, "插入数据," + "vl len" + list.list.size() + " address " + address);
 		map.put(list.address, list);
 		return address;
 	}
@@ -35,6 +41,7 @@ class VersionMap {
 		if (!map.containsKey(address)) {
 			VersionList v = new VersionList(address);
 			v.load();
+			//LOGGER.log(Level.INFO, "读入版本链数据  " + " vl len " + v.list.size());
 			map.put(address, v);
 		}
 	}
@@ -46,6 +53,7 @@ class VersionMap {
 			vl = map.get(address);
 		}
 		synchronized (vl) {
+			//LOGGER.log(Level.INFO, "开始读取数据,xid = " + xid + " vl len " + vl.list.size() + " address " + address);
 			for (Integer v : vl.list) {
 				Entry e = new Entry(dm.read(v), true);
 				if (Visibility.IsVisible(xid, e)) {
@@ -53,6 +61,7 @@ class VersionMap {
 				}
 				e.db.release();
 			}
+			//LOGGER.log(Level.INFO, "读取无数据,xid = " + xid);
 			return null;
 		}
 	}

@@ -20,7 +20,7 @@ public class LockTable {
 	}
 	
 	private LockTable(long millis) {
-		new Thread(new ListeningThread(millis)).start();
+		//new Thread(new ListeningThread(millis)).start();
 	}
 	
 	//监听线程
