@@ -233,6 +233,7 @@ class Tree {
 		Node left = node;
 		Node right = new Node(node.isLeaf(), type);
 		right.setParentPos(node.getParentPos());
+		right.setRight(left.getRightPos(), left.getRightFirstKey());
 		
 		// mid --- node.n
 		for (int j = 0; j < n-mid; j++) {
