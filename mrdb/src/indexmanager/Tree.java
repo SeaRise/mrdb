@@ -65,8 +65,8 @@ class Tree {
         	int rightPos = p.getRightPos();
         	if (rightPos != -1 && IndexUtil.compareTo(key, p.getRightFirstKey(), type) >= 0) {
         		p.release();
-        		lt.unlockS(p.pos);
 				lt.lockS(rightPos);
+				lt.unlockS(p.pos);
 				p = p.getRight(rightPos);
 				continue;
 			}
@@ -126,13 +126,15 @@ class Tree {
 			int rightPos = node.getRightPos();
 			if (rightPos != -1 && IndexUtil.compareTo(key, node.getRightFirstKey(), type) >= 0) {
 				node.release();
-				lt.unlockX(node.pos);
 				lt.lockX(rightPos);
+				lt.unlockX(node.pos);
 				node = node.getRight(rightPos);
 			} else {
 				break;
 			}
 		}
+		
+		//此时node加写锁
 		if (node.isFull()) {
 			split(node, key, value);
 		} else {
@@ -159,13 +161,13 @@ class Tree {
 				value = newNode.pos;
 				newNode.release();
 			} else {
+				//node加着写锁
 				newNode = createNewNode(node, key, value);
 				key = newNode.getKey(0);
 				value = newNode.pos;
 				newNode.release();
-				parent = getParentNode(node, key);
-				Object pkey = parent.getKey(0);
-				parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
+				//此时parent加写锁
+				parent = getParentNode(node, key, kkey);
 			}
 			
 			node.release();
@@ -174,16 +176,20 @@ class Tree {
 		}
 		node.add(key, value);
 		node.writeBackToDM();
-		
+		/*
 		while (!node.isRoot()) {
-			parent = getParentNode(node, key);
+			//parent = getParentNode(node, key);
+			int parentPos = node.getParentPos();
+			lt.lockX(parentPos);
+			parent = Node.getNode(parentPos, type);
+			
 			Object pkey = parent.getKey(0);
 			parent.setKey(0, IndexUtil.compareTo(kkey, pkey, type) < 0 ? kkey : pkey);
 			parent.writeBackToDM();
 			node.release();
 			lt.unlockX(node.pos);
 			node = parent;
-		}
+		}*/
 		
 		node.release();
 		lt.unlockX(node.pos);
@@ -236,17 +242,26 @@ class Tree {
 	}
 	
 	//对父节点加锁,可能要右移,包括右移
-	private Node getParentNode(Node node, Object key) {
+	private Node getParentNode(Node node, Object key, Object kkey) {
 		int parentPos = node.getParentPos();
 		lt.lockX(parentPos);
 		Node pnode = Node.getNode(parentPos, type);
+		
+		//更新parent的最小节点
+		//Object pkey = pnode.getKey(0);
+		//if (IndexUtil.compareTo(kkey, pkey, type) < 0 ) {
+		//	pnode.setKey(0, kkey);
+		//	pnode.writeBackToDM();
+		//}
+		
 		int rightPos;
 		while ((rightPos = pnode.getRightPos()) != -1 && IndexUtil.compareTo(key, pnode.getRightFirstKey(), type) >= 0) {
-			lt.unlockX(pnode.pos);
 			lt.lockX(rightPos);
+			lt.unlockX(pnode.pos);
+			pnode.release();
 			pnode = pnode.getRight(rightPos);
-			continue;
 		}
+		//此时pnode加写锁
 		return pnode;
 	}
 	

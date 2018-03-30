@@ -34,6 +34,9 @@ class Test <E extends Comparable<E>> {
 		new Thread(new c5(rootAddress)).start();
 		new Thread(new c6(rootAddress)).start();
 		new Thread(new c7(rootAddress)).start();
+		im.insert(1001, 1001, rootAddress, Type.int32);
+		Thread.sleep(5000);
+		System.out.println(im.toString());
 	}
 	
 	static class c1 implements Runnable {
@@ -61,6 +64,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 0; i < 1000; i+=7) {
 				System.out.println(i + " c1 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 		
 	}
@@ -89,6 +93,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 1; i < 1000; i+=7) {
 				System.out.println(i + " c2 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 	
@@ -116,6 +121,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 2; i < 1000; i+=7) {
 				System.out.println(i + " c3 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 	
@@ -144,6 +150,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 3; i < 1000; i+=7) {
 				System.out.println(i + " c4 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 	
@@ -171,6 +178,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 4; i < 1000; i+=7) {
 				System.out.println(i + " c5 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 	
@@ -198,6 +206,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 5; i < 1000; i+=7) {
 				System.out.println(i + " c6 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 	
@@ -225,6 +234,7 @@ class Test <E extends Comparable<E>> {
 			for (int i = 6; i < 1000; i+=7) {
 				System.out.println(i + " c7 " + im.search(i, Type.int32, rootAddress));
 			}
+			//System.out.println(im.toString());
 		}
 	}
 }
